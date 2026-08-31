@@ -1,4 +1,4 @@
-# D-GEM: Reliable Asymmetric Dual Memory for Sparse Surgical Video Segmentation
+# D-GEM: Sparsely Supervised Surgical Video Segmentation with Reliable Asymmetric Dual Memory
 
 > D-GEM combines a DINOv3 segmentation backbone with reliability-gated
 > transient memory and evolving semantic anchors for long, sparsely annotated
