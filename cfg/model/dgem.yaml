@@ -1,46 +1,46 @@
-# D-GEM asymmetric dual-memory settings. Toggle it globally with
+# D-GEM asymmetric dual-memory settings. Toggle all memory with
 # `python src/train.py ... --use-memory` or `--no-memory`.
 train:
-  K: 20
-  max_dt: 64
-  use_memory: true
-  use_tm: true
-  use_am: true
-  am_max_items: 8
-  am_red_lambda: 0.5
-  am_attn_beta: 2.0
-  am_keep_k: 256
-  attn_topk_am: 256
-  attn_topk_tm: 128
-  use_mem_attention: true
-  attn_sharp: 80
-  enable_am_refresh: true
-  skip_tm_t0: true
-  am_refresh_sim_max: 0.90
-  am_max_per_class: 3
-  use_abs_time: true
-  max_time_index: 4096
-  detach_memory: true
-  alpha_am: 0.15
-  alpha_tm: 0.15
-  learnable_alpha: true
-  write_topk_patch_tokens: 128
-  read_topk_mem_tokens: 0
-  tm_warmup: 1
-  gate_mode: conf+ent
-  gate_conf_thr: 0.12
-  gate_ent_thr: 0.99
-  allow_pseudo_anchors: true
-  pseudo_every: 1
-  pseudo_warmup: 0
-  pseudo_tau: 0.8
-  pseudo_q99_thr: 0.9
-  pseudo_mean_in_thr: 0.7
-  pseudo_min_area: 0.001
-  pseudo_max_area: 0.20
-  pseudo_streak_req: 1
-  pseudo_k_am: 128
-  pseudo_max_per_class: 1
-  pseudo_conf_scale: 0.25
-  pseudo_w_scale: 0.50
-  pseudo_use_fused_logits: true
+  K: 20                         # Maximum recent frames stored in transient memory (TM).
+  max_dt: 64                    # Largest relative time difference represented by the memory.
+  use_memory: true              # Enable both memory pathways (CLI can override this).
+  use_tm: true                  # Enable transient memory for recent appearance changes.
+  use_am: true                  # Enable anchor memory for stable semantic references.
+  am_max_items: 8               # Total anchor items retained per video.
+  am_red_lambda: 0.5            # Diversity penalty used when choosing anchors.
+  am_attn_beta: 2.0             # Anchor-memory preference during attention reads.
+  am_keep_k: 256                # Maximum anchor tokens retained after compression.
+  attn_topk_am: 256             # Anchor-memory tokens available to attention per read.
+  attn_topk_tm: 128             # Transient-memory tokens available to attention per read.
+  use_mem_attention: true       # Fuse memory with attention; disable for a simpler read.
+  attn_sharp: 80                # Attention sharpness; larger values make reads more selective.
+  enable_am_refresh: true       # Allow reliable predictions to refresh anchor memory.
+  skip_tm_t0: true              # Do not read/write TM at the initial support time step.
+  am_refresh_sim_max: 0.90      # Reject a refreshed anchor if it is too redundant.
+  am_max_per_class: 3           # Per-class cap on anchors.
+  use_abs_time: true            # Use absolute frame indices for temporal position encoding.
+  max_time_index: 4096          # Largest supported absolute frame index.
+  detach_memory: true           # Stop gradients through stored memory states to save memory.
+  alpha_am: 0.15                # Initial anchor-memory fusion weight.
+  alpha_tm: 0.15                # Initial transient-memory fusion weight.
+  learnable_alpha: true         # Learn the two fusion weights during training.
+  write_topk_patch_tokens: 128  # Patch tokens written to TM per frame.
+  read_topk_mem_tokens: 0       # Optional global read cap; 0 keeps all selected tokens.
+  tm_warmup: 1                  # Frames to wait before transient-memory updates.
+  gate_mode: conf+ent           # TM reliability gate: off, conf, ent, or conf+ent.
+  gate_conf_thr: 0.12           # Minimum prediction confidence for a TM update.
+  gate_ent_thr: 0.99            # Maximum normalized entropy for a TM update.
+  allow_pseudo_anchors: true    # Add high-confidence predicted anchors during propagation.
+  pseudo_every: 1               # Consider pseudo-anchors every N frames.
+  pseudo_warmup: 0              # Frames to wait before considering pseudo-anchors.
+  pseudo_tau: 0.8               # Pixel-confidence threshold for pseudo-anchor candidates.
+  pseudo_q99_thr: 0.9           # Required 99th-percentile confidence.
+  pseudo_mean_in_thr: 0.7       # Required mean confidence inside the predicted region.
+  pseudo_min_area: 0.001        # Smallest allowed predicted-region fraction.
+  pseudo_max_area: 0.20         # Largest allowed predicted-region fraction.
+  pseudo_streak_req: 1          # Consecutive reliable frames required before writing an anchor.
+  pseudo_k_am: 128              # Tokens written for each pseudo-anchor.
+  pseudo_max_per_class: 1       # Pseudo-anchors retained per class.
+  pseudo_conf_scale: 0.25       # Confidence contribution to pseudo-anchor ranking.
+  pseudo_w_scale: 0.50          # Weight contribution to pseudo-anchor ranking.
+  pseudo_use_fused_logits: true # Use memory-fused logits to decide pseudo-anchors.

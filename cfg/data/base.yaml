@@ -1,110 +1,87 @@
-model_config: ../model/dgem.yaml
+# Base data and training configuration. The D-GEM memory options are in
+# cfg/model/dgem.yaml and are merged automatically by src/train.py.
+model_config: ../model/dgem.yaml  # Relative path to the D-GEM model profile.
 
 data:
-  task_type       : 'video'
-  name            : dgem_dataset
-  num_ch          : 3
-  num_class       : 2
-
-  root            : data
-  train           : data/sample_dataset/sample_video.csv
-  test            : data/sample_dataset/sample_video.csv
-  img_col          : img
-  mask_col        : mask
-  train_vids      : []
-  test_vids       : []
-  include_indices :
-  use_rep_only    : false
-  use_half        : false
-  modality        :
-
-  ignore_index    : 255
-
-  # Grayscale palette -> class id
-  code_to_class:
-    0:  0    # background
-    1:  1    # foreground example; replace for your labels
-    255: 255 # ignore
-
-  label_json      : ''
-
-# EXPERIMENT SETUP
+  task_type: video                # `image` for independent images; `video` for D-GEM.
+  name: dgem_dataset              # Human-readable dataset name used in run labels.
+  num_ch: 3                       # Input image channels (normally 3 for RGB).
+  num_class: 2                    # Number of semantic classes, including background.
+  root: data                      # Optional dataset-root label; CSV paths may be absolute.
+  train: data/sample_dataset/sample_video.csv  # Training/support CSV manifest.
+  test: data/sample_dataset/sample_video.csv   # Validation or test CSV manifest.
+  img_col: img                    # CSV column containing image paths.
+  mask_col: mask                  # CSV column containing mask paths; `-` means unlabeled.
+  ignore_index: 255               # Mask value excluded from loss and metrics.
+  code_to_class:                  # Raw grayscale-mask value -> training class ID.
+    0: 0                          # Background example.
+    1: 1                          # Foreground example; replace for your label scheme.
+    255: 255                      # Preserve ignored pixels.
+  label_json: ''                  # Optional palette JSON for datasets that require one.
 
 experiment:
-  name          : ''
-  notes         : 'Set num_class and code_to_class for your labels.'
-  seed          : 417
-  debug         : False
-  SUFFX         : 'dgem'
-  project_path  : outputs/dgem
+  name: ''                        # Optional Weights & Biases project; blank disables logging.
+  notes: 'Set num_class and code_to_class for your labels.'  # Run note.
+  seed: 417                       # Random seed; use a fixed integer for reproducibility.
+  debug: false                    # Reduces workload and disables online logging when true.
+  SUFFX: dgem                     # Short suffix included in output/checkpoint names.
+  project_path: outputs/dgem      # Root directory for image-workflow outputs.
 
 train:
-  save_every: 5
-  debug         : [False, False]
-  use_raw_logits : False
-  aux_raw_w     : 0.2
-  t_query       : 10           # number of training frames to sample per video
-  s_support     : 5           # number of support frames
-  sample_in_video: false
-  allowed_max_items: 100
-  allowed_seed: 1337
-  allowed_kwin: 2
-  allowed_strict_consecutive: True
-  jitter        : 0            # jitter around frames 
-  epoch_salt    : 0
-
-  use_stream    : True
-  rollout_len   : 20        # e.g. 80 frames processed per clip
-  rollout_mode  : "full" # window | allowed | full
-  loss_on_query_indices_only: True
-  resize_h      : 480
-  resize_w      : 854
-  eval_only     : False
-  bs            : 1
-  num_workers   : 4
-  model_path    : outputs/dgem
-  ckpt_to_use   : ''
-
-  epochs        : 200
-
-
-  cs            : [256, 256] # [256, 256]
-  wd            : 0.0001
-  lr_enc        : 0.00001
-  lr_dec        : 0.0002
-  dice_weight   : 0.1
-  dice_inc_bg   : False
-  amp           : False
-
-  model         : dv3_vits16plus # dv3_vits16plus, _vitb16, _vitl16,
-                                      # sam2.1_small, _tiny, _large,
-                                      # xmem
-  # DV3 SEG
-  pt_encoder    : True
-  ft_encoder    : True
-  unfreeze_epoch   : 0
-
+  model: dv3_vits16plus           # Supported: dv3_vits16plus, dv3_vitb16, dv3_vitl16.
+  pt_encoder: true                # Load pretrained DINOv3 encoder weights.
+  ft_encoder: true                # Fine-tune encoder after the configured warm-up.
+  unfreeze_epoch: 0               # Epoch at which encoder fine-tuning is enabled.
+  save_every: 5                   # Save a training checkpoint every N epochs.
+  debug: [false, false]           # [general debug, memory debug] switches.
+  use_raw_logits: false           # Add the auxiliary raw-logit loss when true.
+  aux_raw_w: 0.2                  # Weight of that auxiliary loss.
+  t_query: 10                     # Video training: query frames sampled per video.
+  s_support: 5                    # Video training: labeled support frames sampled per video.
+  sample_in_video: false          # Restrict image sampling within individual videos.
+  allowed_max_items: 100          # Cap on candidate frames for `allowed` rollout mode.
+  allowed_seed: 1337              # Seed for `allowed` frame selection.
+  allowed_kwin: 2                 # Neighboring-frame window in `allowed` mode.
+  allowed_strict_consecutive: true # Require consecutive selected frames in `allowed` mode.
+  jitter: 0                       # Temporal sampling jitter in frames.
+  epoch_salt: 0                   # Extra epoch-dependent sampling seed offset.
+  use_stream: true                # Keep video-memory state across rollout frames.
+  rollout_len: 20                 # Frames processed per training rollout.
+  rollout_mode: full              # `full`, `window`, or `allowed` video rollout selection.
+  loss_on_query_indices_only: true # Ignore non-query frames when computing training loss.
+  resize_h: 480                   # Network input height after resize/padding.
+  resize_w: 854                   # Network input width after resize/padding.
+  eval_only: false                # Skip training and run validation only.
+  bs: 1                           # Training batch size.
+  num_workers: 4                  # DataLoader worker processes; set 0 for debugging.
+  model_path: outputs/dgem        # Root directory for video checkpoints/results.
+  ckpt_to_use: ''                 # Optional checkpoint path used for evaluation/resume.
+  epochs: 200                     # Number of training epochs.
+  cs: [256, 256]                  # Segmentation-head channel sizes.
+  wd: 0.0001                      # Optimizer weight decay.
+  lr_enc: 0.00001                 # Encoder learning rate.
+  lr_dec: 0.0002                  # Decoder/memory learning rate.
+  dice_weight: 0.1                # Dice-loss contribution relative to cross entropy.
+  dice_inc_bg: false              # Include background class in Dice loss when true.
+  amp: false                      # Use automatic mixed precision when true.
 
 val:
-  eval_only           : false
-  save_outputs        : false
-  bs                  : 1
-  val_rows            : -1
-  res_dir             : outputs/dgem
-  max_samples         : 500
-  val_t_query         : 10
-  val_every           : 10
-  use_stream          : False
-  rollout_mode        : window
-  rollout_len         : 200
-  rollout_start_idx   : 1
-
-  wandb_vis           : False
-  wandb_vis_every     : 50
-  wandb_vis_max       : 2
-  wandb_vis_frames    : 3
-
-
-  save_preds_every: 10       # dump preds+GT every N epochs
-  save_preds_max_batches: 2  # limit number of videos per epoch
-  save_preds_max_frames: 50  # limit frames per video
+  eval_only: false                # Validation-only mode (also sets training epochs to zero).
+  save_outputs: false             # Save validation visualizations when supported.
+  bs: 1                           # Validation batch size.
+  val_rows: -1                    # Optional subset of validation rows; -1 uses all rows.
+  res_dir: outputs/dgem           # Directory for validation artifacts.
+  max_samples: 500                # Maximum validation samples processed per evaluation.
+  val_t_query: 10                 # Query frames per validation video in windowed mode.
+  val_every: 10                   # Run validation every N training epochs.
+  use_stream: false               # Use sequential memory during validation.
+  rollout_mode: window            # Validation frame-selection mode.
+  rollout_len: 200                # Frames processed in each validation rollout.
+  rollout_start_idx: 1            # First video frame index considered for validation.
+  wandb_vis: false                # Upload validation visualizations to Weights & Biases.
+  wandb_vis_every: 50             # Upload visualizations every N epochs.
+  wandb_vis_max: 2                # Maximum videos visualized per validation pass.
+  wandb_vis_frames: 3             # Frames visualized from each selected video.
+  save_preds_every: 10            # Save prediction/GT examples every N epochs.
+  save_preds_max_batches: 2       # Limit prediction-saving to this many batches.
+  save_preds_max_frames: 50       # Limit saved frames per video.

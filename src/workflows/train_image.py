@@ -14,8 +14,6 @@ from pathlib import Path
 
 from networks.dinov3_seg import DINOv3ViTSeg
 from networks.svsswrapper import SVSSWrapper
-from transformers import Sam2VideoModel, Sam2VideoProcessor
-from networks.sam2_wrapper import SAM2SVSSWrapper
 
 from utils import nested_dotdict, run_training, banner, build_optimizer, DiceCELoss
 from trainer_image import Trainer, inference_with_miou
@@ -87,14 +85,11 @@ if cfg.experiment.debug:
     cfg.val.wandb_vis = False
 
 
-# -----------------------------
-# force eval-only for SAM2
-# -----------------------------
-if "sam2" in cfg.train.model:
-    cfg.val.eval_only = True
-
-if "dv3" not in cfg.train.model:
-    cfg.train.use_raw_logits = False
+if not str(cfg.train.model).startswith("dv3_"):
+    raise ValueError(
+        "This public release supports DINOv3/D-GEM models only. "
+        "Set train.model to dv3_vits16plus, dv3_vitb16, or dv3_vitl16."
+    )
 
 if cfg.val.eval_only:
     cfg.train.epochs = 0

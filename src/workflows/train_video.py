@@ -11,11 +11,6 @@ from torch.utils.data import DataLoader
 import wandb
 from networks.dinov3_seg import DINOv3ViTSeg
 from networks.svsswrapper import SVSSWrapper
-from transformers import Sam2VideoModel, Sam2VideoProcessor
-from networks.sam2_wrapper import SAM2SVSSWrapper
-from networks.xmem_wrapper import XMemSVSSWrapper, XMemCalibWrapper
-from networks.stm_wrapper import STMBaselineWrapper, STMCalibWrapper
-from networks.raft_wrapper import RAFTFlowPropWrapper, RAFTFlowCalibWrapper, SupportCopyCalibWrapper
 
 
 from utils import nested_dotdict, run_training, banner, build_optimizer, DiceCELoss
@@ -44,11 +39,11 @@ if cfg.experiment.debug:
     cfg.train.num_workers = min(0, int(getattr(cfg.train, "num_workers", 2)))
     cfg.val.wandb_vis = False
 
-if 'sam2' in cfg.train.model:
-    cfg.train.eval_only = True
-
-if 'dv3' not in cfg.train.model:
-    cfg.train.use_raw_logits = False
+if not str(cfg.train.model).startswith("dv3_"):
+    raise ValueError(
+        "This public release supports DINOv3/D-GEM models only. "
+        "Set train.model to dv3_vits16plus, dv3_vitb16, or dv3_vitl16."
+    )
 
 if cfg.train.eval_only:
     cfg.train.epochs = 0
