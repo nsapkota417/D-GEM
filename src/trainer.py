@@ -514,6 +514,7 @@ class Trainer:
 
                     logits_seq = []
                     tgt_seq = []
+                    labeled_roll_indices = []
 
                     # use dataset readers (consistent mapping)
                     ds = getattr(val_loader, "dataset", None)
@@ -521,28 +522,44 @@ class Trainer:
 
                     for t in range(T):
                         ip = q_img_paths[t]
-                        mp = q_mask_paths[t]
-
                         img_np = base._read_rgb(ip)
-                        msk_np = base._read_and_map_mask(mp)
 
                         img_t = torch.from_numpy(img_np).permute(2, 0, 1).float().div(255.0).unsqueeze(0).to(
                             self.device, non_blocking=True
                         )
-                        msk_t = torch.from_numpy(msk_np.astype(np.int64)).unsqueeze(0).to(
-                            self.device, non_blocking=True
-                        )  # (1,H,W)
 
                         qi_t = q_roll[0, t:t+1]  # absolute index (1,)
                         # logits_t, state = model.step(query_img=img_t, state=state, query_index=qi_t)
                         logits_t, logits_raw_t, state = model.step(query_img=img_t, state=state, query_index=qi_t)
 
 
-                        logits_seq.append(logits_t.squeeze(0))  # (C,H,W)
-                        tgt_seq.append(msk_t.squeeze(0))        # (H,W)
+                        is_labeled = (
+                            q_idx is not None
+                            and bool((q_idx[0] == qi_t[0]).any().item())
+                        )
+                        if is_labeled:
+                            msk_np = base._read_and_map_mask(q_mask_paths[t])
+                            msk_t = torch.from_numpy(msk_np.astype(np.int64)).unsqueeze(0).to(
+                                self.device, non_blocking=True
+                            )
+                            logits_seq.append(logits_t.squeeze(0))  # (C,H,W)
+                            tgt_seq.append(msk_t.squeeze(0))        # (H,W)
+                            labeled_roll_indices.append(int(qi_t[0].item()))
+
+                    if not logits_seq:
+                        # An unlabeled test split has no loss/metric target.
+                        # Dedicated prediction writes are handled by the inference CLI.
+                        if hasattr(model, "clear_video"):
+                            model.clear_video(video_id)
+                        elif hasattr(model, "_streams"):
+                            model._streams.pop(str(video_id), None)
+                        continue
 
                     out = torch.stack(logits_seq, dim=0).unsqueeze(0)     # (1,T,C,H,W)
                     query_masks = torch.stack(tgt_seq, dim=0).unsqueeze(0)  # (1,T,H,W)
+                    q_roll = torch.as_tensor(
+                        [labeled_roll_indices], device=self.device, dtype=torch.long
+                    )
 
                     if hasattr(model, "clear_video"):
                         model.clear_video(video_id)

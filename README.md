@@ -5,3 +5,30 @@ Abstract. Surgical video segmentation often operates on long image sequences for
 
 Accepted for publication in the 29th INTERNATIONAL CONFERENCE ON MEDICAL IMAGE COMPUTING AND COMPUTER ASSISTED INTERVENTION (MICCAI 2026).
 Codes will be released soon. 
+
+## Data modes
+
+D-GEM has two canonical dataset implementations:
+
+- `src/dataset_image.py` for independent image training and evaluation.
+- `src/dataset_video.py` for sequential D-GEM training and propagation.
+
+### Sparse video manifests
+
+Video datasets are CSV files with at least these columns:
+
+```text
+img,mask,video_src,video_clip
+/data/video_01/frame000001.png,/data/video_01/masks/frame000001.png,video_01,clip_01
+/data/video_01/frame000002.png,-,video_01,clip_01
+```
+
+The `mask` value may be blank or `-` for an unannotated frame. `dataset_video.py`
+uses only annotated frames as support or supervised query frames while preserving
+all image paths for sequential memory rollouts. A training clip requires at least
+two annotated frames: one support frame and one supervised query frame.
+
+For sparse temporal training, set `train.use_stream: true` and use a rollout that
+contains your annotations (normally `train.rollout_mode: full`). This lets D-GEM
+advance its transient and anchor memories through unlabeled frames while applying
+loss only on the annotated query frames.

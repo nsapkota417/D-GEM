@@ -110,6 +110,7 @@ class SVSSDataset(Dataset):
             self.clip_data[(vs, vc)] = {
                 "img": g["img"].tolist(),
                 "mask": g[self.mask_col].tolist(),
+                "labeled": [self._has_mask(path) for path in g[self.mask_col]],
                 "n": int(len(g)),
             }
 
@@ -153,6 +154,24 @@ class SVSSDataset(Dataset):
 
     def __len__(self):
         return len(self.clips)
+
+    @staticmethod
+    def _has_mask(path) -> bool:
+        """Return whether a manifest entry refers to an available label mask.
+
+        Sparse-video manifests may leave ``mask`` blank (or use ``-``) for
+        unannotated frames.  Paths are checked when the mask is actually read,
+        so remote or lazily mounted datasets remain supported.
+        """
+        if path is None or (isinstance(path, float) and np.isnan(path)):
+            return False
+        return str(path).strip() not in {"", "-", "none", "None", "nan", "NaN"}
+
+    @staticmethod
+    def _repeat_to_length(indices: List[int], length: int) -> List[int]:
+        if not indices:
+            return []
+        return [int(indices[i % len(indices)]) for i in range(length)]
 
     def _get_rng(self, idx: int):
         worker_info = torch.utils.data.get_worker_info()
@@ -437,9 +456,17 @@ class SVSSDataset(Dataset):
         cd = self.clip_data[(vs, vc)]
         img_list = cd["img"]
         msk_list = cd["mask"]
+        labeled = cd["labeled"]
         n = cd["n"]
         if n < 2:
             raise RuntimeError(f"{vs}/{vc} has <2 frames")
+
+        labeled_idx = [i for i, has_label in enumerate(labeled) if has_label]
+        if not labeled_idx:
+            raise RuntimeError(
+                f"{vs}/{vc} has no annotated frames. Add at least one mask "
+                f"path in the '{self.mask_col}' column."
+            )
 
         # stream toggles
         stream_train = bool(getattr(self.cfg.train, "use_stream", False))
@@ -456,51 +483,44 @@ class SVSSDataset(Dataset):
         allowed_set = self._allowed_set_cache[vkey]
         Kwin = int(self.allowed_kwin)
 
-        # support
+        # Support frames must have ground-truth masks.  In sparse settings they
+        # are selected from all annotated frames, rather than from the full
+        # video timeline.
         if self.split == "train":
             S_total = max(1, int(self.s_support))
-            s_idx = self._sample_total_frames_from_allowed(
-                allowed=allowed, vs=vs, vc=vc, n_frames=n,
-                total_frames=S_total,
-                jitter=int(self.support_jitter),
-                Kwin=Kwin,
-                start_idx=0,
-                idx=idx,
-                forbidden=set(),
-            )
-            if 0 in allowed_set and 0 not in set(map(int, s_idx)):
-                s_idx[0] = 0
+            rng = self._get_rng(idx + 100000 * int(self.epoch_salt))
+            ordered_labels = list(labeled_idx)
+            rng.shuffle(ordered_labels)
+            s_idx = self._repeat_to_length(ordered_labels, S_total)
         else:
-            s_idx = [0] if 0 in allowed_set else [int(allowed[0])]
+            S_total = max(1, int(self.s_support))
+            s_idx = self._repeat_to_length(labeled_idx, S_total)
 
         # query
         if self.split == "train":
             T_total = int(self.train_t_query)
-            forbidden = set(map(int, s_idx))
+            support_set = set(map(int, s_idx))
+            query_candidates = [i for i in labeled_idx if i not in support_set]
+            if not query_candidates:
+                raise RuntimeError(
+                    f"{vs}/{vc} needs at least two annotated frames for "
+                    "training: one support frame and one supervised query frame."
+                )
             if T_total < 0:
-                q_idx = [int(i) for i in allowed.tolist() if int(i) >= 1 and int(i) not in forbidden]
+                q_idx = query_candidates
             else:
-                q_idx = self._sample_total_frames_from_allowed(
-                    allowed=allowed, vs=vs, vc=vc, n_frames=n,
-                    total_frames=T_total,
-                    jitter=int(self.train_jitter),
-                    Kwin=Kwin,
-                    start_idx=1,
-                    idx=idx,
-                    forbidden=forbidden,
+                rng = self._get_rng(idx + 200000 * int(self.epoch_salt))
+                q_idx = self._repeat_to_length(
+                    rng.sample(query_candidates, k=min(T_total, len(query_candidates))),
+                    T_total,
                 )
         else:
             T_total = int(self.val_t_query)
+            query_candidates = [i for i in labeled_idx if i not in set(map(int, s_idx))]
             if T_total < 0:
-                q_idx = list(range(1, n))
+                q_idx = query_candidates
             else:
-                q_idx = self._evenly_spaced_indices(n_frames=n, t_query=T_total)
-                if len(q_idx) == 0:
-                    q_idx = [1] if n > 1 else [0]
-                if len(q_idx) < T_total:
-                    q_idx = q_idx + [int(q_idx[-1])] * (T_total - len(q_idx))
-                elif len(q_idx) > T_total:
-                    q_idx = q_idx[:T_total]
+                q_idx = self._repeat_to_length(query_candidates, T_total)
 
         # enforce disjoint + fixed length
         sset = set(map(int, s_idx))
@@ -514,9 +534,11 @@ class SVSSDataset(Dataset):
 
         if target_q is not None:
             if len(q_idx) == 0:
-                cand = [int(i) for i in allowed.tolist() if int(i) >= 1 and int(i) not in sset]
+                cand = [int(i) for i in labeled_idx if int(i) not in sset]
                 if not cand:
-                    cand = [int(allowed[-1])]
+                    raise RuntimeError(
+                        f"{vs}/{vc} has no annotated query frame after selecting supports."
+                    )
                 q_idx = [cand[0]]
             if len(q_idx) < target_q:
                 q_idx = q_idx + [int(q_idx[-1])] * (target_q - len(q_idx))
@@ -595,26 +617,15 @@ class SVSSDataset(Dataset):
             # Supervised query frames MUST be inside rollout
             # ----------------------------
             if self.split == "train":
-                tq = int(getattr(self.cfg.train, "t_query", 10))
-                tq = max(1, min(tq, len(query_roll_idx)))
-
-                # pick tq frames from within the rollout window
-                rng = self._get_rng(idx + 100000 * int(self.epoch_salt))
-                if tq >= len(query_roll_idx):
-                    q_sup = list(map(int, query_roll_idx))
-                else:
-                    # random subset (fast); or use evenly spaced if you prefer
-                    q_sup = sorted(rng.sample(list(map(int, query_roll_idx)), k=tq))
+                q_sup = [int(i) for i in q_idx if int(i) in set(query_roll_idx)]
+                if not q_sup:
+                    raise RuntimeError(
+                        f"{vs}/{vc} selected no annotated query frame in the "
+                        "rollout. Use rollout_mode: full or increase rollout_len."
+                    )
 
             else:  # val/test
-                vtq = int(getattr(self.cfg.val, "val_t_query", -1))
-                if vtq < 0 or vtq >= len(query_roll_idx):
-                    q_sup = list(map(int, query_roll_idx))   # supervise all rollout frames
-                else:
-                    # evenly spaced within rollout window
-                    xs = np.linspace(0, len(query_roll_idx) - 1, num=vtq, endpoint=True)
-                    pick = np.unique(np.rint(xs).astype(int)).tolist()
-                    q_sup = [int(query_roll_idx[i]) for i in pick]
+                q_sup = [int(i) for i in q_idx if int(i) in set(query_roll_idx)]
 
             q_img_paths = [str(img_list[i]) for i in query_roll_idx]
             q_msk_paths = [str(msk_list[i]) for i in query_roll_idx]
