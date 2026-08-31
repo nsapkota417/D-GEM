@@ -20,13 +20,13 @@ from networks.sam2_wrapper import SAM2SVSSWrapper
 from utils import nested_dotdict, run_training, banner, build_optimizer, DiceCELoss
 from trainer_img import Trainer, inference_with_miou
 
-from dataset_svss import (
+from dataset_video import (
     SVSSDataset,
     svss_collate,
     svss_collate_stream,
     worker_init_fn,
 )
-from dataset_demo import ImageSegDataset, image_collate
+from dataset_image import ImageSegDataset, image_collate
 
 
 start = time.time()
