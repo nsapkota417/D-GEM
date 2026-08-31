@@ -58,3 +58,22 @@ video` for sequential D-GEM. `--data-csv` supplies one CSV for both splits;
 `src/train.py` deep-merges the single `cfg/model/dgem.yaml` profile before
 starting the selected workflow. Control memory with `--use-memory` or
 `--no-memory`; no separate no-memory profile is needed.
+
+## Inference
+
+Use the checkpoint and a test CSV with the same base configuration. Video mode
+uses labeled frames from the training CSV as supports, matched to test frames by
+`video_src` and `video_clip` (or `video_src` alone when no clip column exists).
+
+```bash
+python src/infer.py -cfg cfg/data/base.yaml \
+  --task-type video \
+  --support-csv /path/to/train.csv \
+  --test-csv /path/to/test.csv \
+  --weights /path/to/checkpoint.pth \
+  --output-dir outputs/video_inference \
+  --save-preds
+```
+
+Test-mask paths are optional. When present, `report.csv` and `summary.json`
+include metrics; otherwise inference still runs and reports prediction output.
