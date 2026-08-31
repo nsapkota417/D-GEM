@@ -78,6 +78,22 @@ the video wrapper's encoder/decoder automatically. Memory-specific parameters
 that are absent from an image checkpoint retain the values in
 `cfg/model/dgem.yaml`.
 
+### Run D-GEM without memory
+
+Memory is optional. `--no-memory` runs the same DINOv3 encoder/decoder as an
+independent-frame segmentation model, which is a strong and useful baseline
+for conventional train/test evaluation. Use it when sequential context is not
+needed, then switch to `--use-memory` when annotated support frames and
+temporal propagation are beneficial.
+
+```bash
+python src/train.py -cfg cfg/data/base.yaml \
+  --task-type video \
+  --train-csv /path/to/train.csv \
+  --test-csv /path/to/test.csv \
+  --no-memory
+```
+
 ## 2. CSV manifests
 
 ### Common columns

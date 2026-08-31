@@ -69,6 +69,7 @@ temporal and semantic context through the remaining frames.
 | Stage | What is learned or built | Why it is useful |
 | --- | --- | --- |
 | Image-only train/test | DINOv3 encoder and segmentation decoder | Best fit for conventional image datasets and independent train/test partitions |
+| D-GEM without memory | The same encoder/decoder, evaluated frame by frame | A simple, strong baseline when temporal propagation is unnecessary or unavailable |
 | Video fine-tuning (optional) | The same encoder/decoder; optionally the memory-fusion scalars | Adapts predictions to sequential-video data when available |
 | Video inference / propagation | Per-video GTM/EAM state from support masks and predictions | Training-free temporal and semantic context for all test frames |
 
@@ -77,6 +78,11 @@ videos. Its optional fusion scalars can be learned during video fine-tuning,
 but training is not required to use memory at inference. An image-only
 checkpoint can therefore be run in video mode with `--support-csv` to propagate
 selected annotations across a test video.
+
+Memory is optional. Use `--no-memory` to run D-GEM as an independent-frame
+DINOv3 segmentation model; this is a useful and performant baseline for
+train/test evaluation. Enable `--use-memory` when temporal continuity and
+semantic support from annotated frames are beneficial.
 
 ## Why D-GEM
 
