@@ -1,6 +1,21 @@
-import os
-import numpy as np
+from copy import deepcopy
+from contextlib import contextmanager
+import io
+import sys
+
 import torch
+import torch.nn as nn
+import torch.nn.functional as F
+
+
+__all__ = [
+    "DiceCELoss",
+    "DotDict",
+    "banner",
+    "build_optimizer",
+    "nested_dotdict",
+    "run_training",
+]
 
 def fmt_metric(metric):
     return int(round(float(metric) * 100))
@@ -27,8 +42,6 @@ def run_training(
     trainer,
     train_loader,
     val_loader,
-    optimizer,
-    run_name,
     wandb_run=None,
     topk: int = 5,
 ):
@@ -36,7 +49,9 @@ def run_training(
     val_every = int(getattr(cfg.val, "val_every", 1))
     topk = int(topk)
 
-    eval_only = bool(getattr(cfg.train, "eval_only", False))
+    eval_only = bool(
+        getattr(cfg.train, "eval_only", False) or getattr(cfg.val, "eval_only", False)
+    )
 
     def should_val(ep: int) -> bool:
         return (
@@ -58,6 +73,7 @@ def run_training(
 
     best_overall = -1e9
     topk_list = []
+    last_val_metric = float("nan")
 
     if eval_only:
         ep = 0
@@ -109,6 +125,7 @@ def run_training(
                 )
 
                 m = float(val_metric)
+                last_val_metric = m
                 p1 = float(vmp1)
                 p2 = float(vmp2)
                 p3 = float(vmp3)
@@ -155,8 +172,8 @@ def run_training(
                         step=ep,
                     )
 
-        if getattr(cfg.experiment, "project_path", None):
-            save_tag = f"last_ep{ep:03d}_met{fmt_metric(m):04d}"
+        if topk_list and getattr(cfg.experiment, "project_path", None):
+            save_tag = f"last_ep{ep:03d}_met{fmt_metric(last_val_metric):04d}"
             ckpt_path = trainer.save_model(save_tag)
             print(f"✅ Saved last model to: {ckpt_path}")
 
@@ -183,42 +200,38 @@ def run_training(
 
 
 
-# -----------------------
 class DotDict(dict):
-    """ Dictionary that allows dot notation access (nested not supported). """
-    # __getattr__ = dict.__getitem__
+    """Dictionary with attribute-style access; use ``nested_dotdict`` recursively."""
+
     __setattr__ = dict.__setitem__
     __delattr__ = dict.__delitem__
-    
+
     def __getattr__(self, item):
         try:
-            return super().__getitem__(item)
-        except KeyError:
-            raise AttributeError(item)
+            return self[item]
+        except KeyError as error:
+            raise AttributeError(item) from error
     
     def __deepcopy__(self, memo):
         cls = self.__class__
         result = cls.__new__(cls)
         memo[id(self)] = result
         for k, v in self.items():
-            setattr(result, k, copy.deepcopy(v, memo))
+            setattr(result, k, deepcopy(v, memo))
         return result
-    
-def nested_dotdict(nested_dict):
-    if not isinstance(nested_dict, dict):
-        return nested_dict
-    new_dict = {k: nested_dotdict(nested_dict[k]) for k in nested_dict}
-    return DotDict(new_dict)
 
 
-from contextlib import contextmanager
-import io
-import sys
+def nested_dotdict(value):
+    """Recursively convert dictionaries to :class:`DotDict` instances."""
+    if not isinstance(value, dict):
+        return value
+    return DotDict({key: nested_dotdict(item) for key, item in value.items()})
 
 
 @contextmanager
 def banner(width=120, char="=", pad=2, top=False, bottom=True):
-    assert width > pad * 2, "Width too small for padding"
+    if width <= pad * 2:
+        raise ValueError("Width must be greater than twice the padding.")
 
     buffer = io.StringIO()
     old_stdout = sys.stdout
@@ -238,11 +251,9 @@ def banner(width=120, char="=", pad=2, top=False, bottom=True):
 
         border = char * width
 
-        # Top border
         if top:
             print(border)
 
-        # Content (truncate if too long)
         for line in lines:
             truncated = line[:content_width]
             print(" " * pad + truncated.ljust(content_width) + " " * pad)
@@ -250,8 +261,6 @@ def banner(width=120, char="=", pad=2, top=False, bottom=True):
         # Bottom border
         if bottom:
             print(border)
-
-# --------------
 
 def build_optimizer(cfg, model):
     enc_params = []
@@ -267,9 +276,9 @@ def build_optimizer(cfg, model):
             other_params.append(param)
 
     param_groups = []
-    if len(enc_params) > 0:
+    if enc_params:
         param_groups.append({"params": enc_params, "lr": float(cfg.train.lr_enc)})
-    if len(other_params) > 0:
+    if other_params:
         param_groups.append({"params": other_params, "lr": float(cfg.train.lr_dec)})
 
     optimizer = torch.optim.AdamW(
@@ -277,11 +286,6 @@ def build_optimizer(cfg, model):
         weight_decay=float(cfg.train.wd),
     )
     return optimizer
-
-# --------------------------------------
-
-import torch.nn as nn
-import torch.nn.functional as F
 
 class DiceCELoss(nn.Module):
     def __init__(self, num_classes, ignore_index=255, dice_weight=0.5, include_bg=False):
@@ -293,7 +297,6 @@ class DiceCELoss(nn.Module):
         self.include_bg = bool(include_bg)
 
     def forward(self, logits, targets):
-
         ce = self.ce(logits, targets)
 
         if self.dice_weight <= 0:
@@ -305,7 +308,7 @@ class DiceCELoss(nn.Module):
         t = targets.clone()
         t[~valid] = 0
 
-        onehot = F.one_hot(t, num_classes=self.num_classes).permute(0,3,1,2).float()
+        onehot = F.one_hot(t, num_classes=self.num_classes).permute(0, 3, 1, 2).float()
 
         valid = valid.unsqueeze(1)
         probs = probs * valid

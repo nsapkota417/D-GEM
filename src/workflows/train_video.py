@@ -466,10 +466,8 @@ stats = run_training(
     trainer=trainer,
     train_loader=train_loader,
     val_loader=val_loader,
-    optimizer=optimizer,
     wandb_run=wandb_run,
     topk=5,
-    run_name=run_name,   # ✅ NEW
 )
 
 with banner(top=True, bottom=False):
