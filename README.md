@@ -32,3 +32,15 @@ For sparse temporal training, set `train.use_stream: true` and use a rollout tha
 contains your annotations (normally `train.rollout_mode: full`). This lets D-GEM
 advance its transient and anchor memories through unlabeled frames while applying
 loss only on the annotated query frames.
+
+### Configuration templates
+
+Only four portable templates are maintained in `cfg/data/`:
+
+- `propagate_image.yaml`
+- `propagate_video.yaml`
+- `train_test_image.yaml`
+- `train_test_video.yaml`
+
+Replace each `path/to/...` or `data/manifests/...` value with paths for your data
+and set `num_class` plus `code_to_class` to match your label maps.

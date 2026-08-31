@@ -17,19 +17,12 @@ conda activate pyt
 
 # fi
 
-# python src/train_image.py -cfg cfg/data/cisvismm_ureter_1min.yaml
-# python src/train_image.py -cfg cfg/data/cisvismm_bile_10min.yaml
-# python src/train_image.py -cfg cfg/data/cisvismm_thoraic_4min.yaml
-python src/train_image.py -cfg cfg/data/demo_prep.yaml
+python src/train_image.py -cfg cfg/data/train_test_image.yaml
 
 
-# python src/inference.py -cfg /users/nsapkota/VOS/cfg/data/demo_inf.yaml
+# python src/inference_crop_padding.py -cfg cfg/data/propagate_image.yaml
 
 
-# python src/train_image.py -cfg cfg/data/cnh_pe.yaml
-# python src/train_video.py -cfg cfg/data/cholecseg8k.yaml
-# python src/train_video.py -cfg cfg/data/sarrarp50.yaml
-# python src/train_video.py -cfg cfg/data/endovis.yaml
+# python src/train_video.py -cfg cfg/data/train_test_video.yaml
 
 conda deactivate
-

@@ -1,55 +1,51 @@
 data:
-  task_type       : 'image'
-  name            : thoraic_4min
-  num_ch          : 1           # swir: 1, wl: 3, cfg overwrites based on modality
-  num_class       : 2
-  notes           : 'cisvis_mmv2'
-  # root            : /users/nsapkota/VOS/data/datasets/sarrarp50
-  train           : /users/nsapkota/VOS/data/datasets/cisvismm/thoraic_4min.csv
-  test            : /users/nsapkota/VOS/data/datasets/cisvismm/thoraic_4min.csv
-  include_indices : [[135,4060], [4660,]]
-  use_rep_only    : True
-  modality        : both_on_wl_img      # swir_img, wl_img, both_on_wl_img , both_on_swir_img
+  name            : video_propagation
+  num_ch          : 3
+  num_class       : 10
+  notes           : 'Use sparse labels for support and supervised query frames.'
+  root            : data/videos
+  train           : data/manifests/propagation_video.csv
+  test            : data/manifests/propagation_video.csv
+
+  mask_col        : mask 
+
+
   ignore_index    : 255
+
+  # Grayscale palette -> class id
   code_to_class:
     0:  0    # background
     1:  1    # tool_clasper
+    2:  2    # tool_wrist
+    3:  3    # tool_shaft
+    4:  4    # suturing_needle
+    5:  5    # thread
+    6:  6    # suction_tool
+    7:  7    # needle_holder
+    8:  8    # clamps
+    9:  9    # catheter
+    255: 255 # ignore (optional, if you use ignore masks)
 
+  label_json      : 
+
+# EXPERIMENT SETUP
 
 experiment:
-  name          : 'cisvis_mmv2'
-  notes         : ''
+  name          : ''
+  notes         : 'Set num_class and code_to_class for your labels.'
   seed          : 417
   debug         : False
-  SUFFX         : 'thoraic_4min_both_on_wl_img'
-  project_path  : '/users/nsapkota/VOS/results/cisvis_mmv2/thoraic_4min_both_on_wl_img'
-
-
+  SUFFX         : 'video_propagation'
 
 train:
-  epochs        : 250
-  # DV3 SEG
-  pt_encoder    : True
-  ft_encoder    : True
-  unfreeze_epoch   : 3
-  bs            : 12
-
-
-  save_every: 10
-
-  sample_in_video: False
-  t_query       : 200          # number of training frames to sample per video
-
-  resize_h      : 
-  resize_w      : 
-
-
-
-  use_raw_logits : False
+  save_every: 5
+  use_raw_logits : True
   aux_raw_w     : 0.2
+
   debug         : [False, False]
 
-  s_support     : 1           # number of support frames
+  t_query       : 10           # number of training frames to sample per video
+  s_support     : 5           # number of support frames
   allowed_max_items: 500
   allowed_seed: 1337
   allowed_kwin: 2
@@ -57,13 +53,18 @@ train:
   jitter        : 0            # jitter around frames 
   epoch_salt    : 0
 
-  use_stream    : False
-  rollout_len   : 40        # e.g. 80 frames processed per clip
-  rollout_mode  : window # window | allowed | full
+  use_stream    : True
+  rollout_len   : 80        # e.g. 80 frames processed per clip
+  rollout_mode  : "full"    # window | allowed | full
   loss_on_query_indices_only: True
-
+  resize_h      : 480
+  resize_w      : 854
+  eval_only     : False
+  bs            : 1
   num_workers   : 4
+  model_path    : outputs/video_propagation
 
+  epochs        : 20
 
 
   cs            : [256, 256] # [256, 256]
@@ -72,18 +73,15 @@ train:
   lr_dec        : 0.0002
   dice_weight   : 0.1
   dice_inc_bg   : False
-  amp           : False
+  amp           : True
 
-  model         : dv3_vits16plus    # dv3_vits16plus, _vitb16, _vitl16,
+  model         : dv3_vits16plus      # dv3_vits16plus, _vitb16, _vitl16,
                                       # sam2.1_small, _tiny, _large,
-                                      # xmem, stm
-                                      # raft
-
-  ckpt_to_use : '' # '/users/nsapkota/VOS/results_xma/cisvismm_v100_ftT/cisvismm/dv3_vits16plus/best_05250242.pth'
-                # '/users/nsapkota/VOS/results_xma/cisvismm_a10_ftT_540p_bs12/cisvismm/dv3_vits16plus/best_05241757.pth' # '/users/nsapkota/VOS/results/cnh_pe/cnh/dv3_vits16plus/best_04250357.pth' 
-                # NE: '/users/nsapkota/VOS/results/nch/cnh/dv3_vits16plus/best_04050440.pth'
-
-
+                                      # xmem
+  # DV3 SEG
+  pt_encoder    : True
+  ft_encoder    : True
+  unfreeze_epoch   : 0
 
   # SAM2
   sam2_enhanced: True
@@ -96,7 +94,7 @@ train:
   # ---- memory (ABD v2: reliability + attention)
   K                   : 20        # TM keeps last K / # of C items 
   max_dt              : 64       # temporal PE window
-  use_memory          : False    # enable memory
+  use_memory          : True    # enable memory
   use_tm              : True    # use transient memory
   use_am              : True    # use anchor memory
 
@@ -171,25 +169,12 @@ train:
 
 
 val:
-  eval_only     : False
-  val_rows : -1 # [26,52] # [int, int], [int,null], -1
-  res_dir : '/groups/dchen/nick/dgem/dgem_cisvismm_v2'
-  bs                  : 5
-  val_every           : 5
-
-
-  eval_chunk_size     : 2000
-  eval_print_every    : 20
-
-  max_samples         : 100
-
-
-  val_t_query         : 10
-  use_stream          : False
+  use_stream          : True, 
+  rollout_len         : 275
+  val_t_query         : -1
+  val_every           : 1
   rollout_mode        : window
-  rollout_len         : 10
   rollout_start_idx   : 1
-
 
   wandb_vis           : False
   wandb_vis_every     : 50

@@ -17,9 +17,8 @@ conda activate pyt
 
 # fi
 
-python src/inference_crop_padding.py -cfg /users/nsapkota/VOS/cfg/data/demo_inf.yaml
-# python src/inference.py -cfg /users/nsapkota/VOS/cfg/data/demo_inf.yaml
+python src/inference_crop_padding.py -cfg cfg/data/propagate_image.yaml
+# python src/inference.py -cfg cfg/data/propagate_image.yaml
 
 conda deactivate
-
 
