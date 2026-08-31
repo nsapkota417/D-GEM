@@ -7,11 +7,28 @@ This guide covers the two public workflows:
    annotations from selected support frames to every frame of a video.
 
 All commands below are run from the repository root after activating the
-project environment:
+project environment.
+
+## 1. Set up the environment
+
+Create a Python 3.10+ Conda environment. Install PyTorch using the command for
+your CUDA version (or CPU) from [pytorch.org](https://pytorch.org/get-started/locally/),
+then install the remaining packages:
 
 ```bash
-conda activate pyt
+conda create -n dgem python=3.10 -y
+conda activate dgem
+
+# Install the PyTorch build that matches your CUDA driver or CPU platform.
+# Example only; use the current command from pytorch.org for your system.
+pip install torch torchvision
+
+pip install -r requirements.txt
 ```
+
+`requirements.txt` installs Transformers (DINOv3), NumPy, Pandas, OpenCV,
+Pillow, PyYAML, and optional Weights & Biases logging. Set `experiment.name: ''`
+in `cfg/data/base.yaml` to disable Weights & Biases.
 
 The public entry points are:
 
@@ -20,7 +37,7 @@ src/train.py    # training
 src/infer.py    # checkpoint inference
 ```
 
-## 1. Configure the project
+## 2. Configure the project
 
 The repository keeps one base configuration and one D-GEM model profile:
 
@@ -94,7 +111,7 @@ python src/train.py -cfg cfg/data/base.yaml \
   --no-memory
 ```
 
-## 2. CSV manifests
+## 3. CSV manifests
 
 ### Common columns
 
@@ -126,7 +143,7 @@ img,mask,video_src,video_clip,frame_idx
 /data/v01/frame000001.png,-,v01,clip_01,1
 ```
 
-## 3. Train/test split training
+## 4. Train/test split training
 
 Use this workflow when train and test are distinct dataset partitions.
 
@@ -166,7 +183,7 @@ loss is computed only for annotated query frames. Each training clip needs at
 least two annotated frames: one is selected as a support frame and another is
 used as a supervised query frame.
 
-## 4. Propagation from selected annotated frames
+## 5. Propagation from selected annotated frames
 
 Propagation is video inference in which the **support CSV controls exactly
 which annotations initialize D-GEM memory**.
@@ -214,7 +231,7 @@ processes every row of `test_frames.csv` in temporal order. It never uses a
 test mask as a support label. If a test row has a valid mask, that mask is used
 only to calculate metrics.
 
-## 5. Checkpoint inference on a test set
+## 6. Checkpoint inference on a test set
 
 ### Video checkpoint inference
 
@@ -251,7 +268,7 @@ python src/infer.py -cfg cfg/data/base.yaml \
 
 Omit `--save-preds` when only evaluation numbers are needed.
 
-## 6. Inference outputs
+## 7. Inference outputs
 
 Every inference run writes:
 
@@ -271,7 +288,7 @@ With `--save-preds`, label-map PNGs are also written below:
 <output-dir>/predictions/<video_src>/<video_clip>/<frame-name>.png
 ```
 
-## 7. Useful command-line overrides
+## 8. Useful command-line overrides
 
 `src/train.py` overrides base-config values with:
 
@@ -294,22 +311,4 @@ With `--save-preds`, label-map PNGs are also written below:
 --output-dir PATH
 --save-preds
 --gpu INDEX
-```
-
-## 8. Server workflow
-
-Update the server checkout before running:
-
-```bash
-cd /path/to/D-GEM
-git pull origin main
-conda activate pyt
-```
-
-If Git reports a local modified file, inspect it before pulling:
-
-```bash
-git diff
-git stash push -m "temporary server edit"
-git pull origin main
 ```

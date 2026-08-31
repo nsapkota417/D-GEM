@@ -18,7 +18,7 @@ Accepted at the 29th International Conference on Medical Image Computing and Com
 
 <sub>Official MICCAI 2026 artwork from the <a href="https://conferences.miccai.org/2026/en/PROMOTIONAL-KIT.html">MICCAI promotional kit</a>.</sub>
 
-| Paper | Code | Practical guide |
+| Method | Implementation | Practical guide |
 | --- | --- | --- |
 | Sparsely Supervised Surgical Video Segmentation with Reliable Asymmetric Dual Memory | This repository | [Training and inference guide](docs/RUNNING.md) |
 
@@ -27,7 +27,7 @@ Accepted at the 29th International Conference on Medical Image Computing and Com
 - [Overview](#overview)
 - [Modular training and inference](#modular-training-and-inference)
 - [Why D-GEM](#why-d-gem)
-- [Results from the camera-ready paper](#results-from-the-camera-ready-paper)
+- [D-GEM performance](#d-gem-performance)
 - [Quick start](#quick-start)
 - [Data manifests](#data-manifests)
 - [Training](#training)
@@ -43,7 +43,7 @@ frame-level supervision: annotated frames provide semantic support, and the
 model processes the full video sequentially to predict a segmentation for every
 frame.
 
-The camera-ready paper introduces an asymmetric two-bank memory design:
+D-GEM uses an asymmetric two-bank memory design:
 
 | Component | Role | Update behavior |
 | --- | --- | --- |
@@ -94,7 +94,7 @@ semantic support from annotated frames are beneficial.
 | Domain shift with limited labels | DINOv3 features and memory are decoupled for data-efficient adaptation |
 | Per-object VOS assumptions do not fit semantic segmentation | D-GEM makes dense, multi-class semantic predictions directly |
 
-## Results from the camera-ready paper
+## D-GEM performance
 
 Average mIoU (%) on three surgical-video datasets. D-GEM uses 34.1M parameters
 (5.4M trainable in the frozen-encoder setting).
@@ -121,16 +121,19 @@ Average mIoU (%) on three surgical-video datasets. D-GEM uses 34.1M parameters
 | DINOv3Seg-V | 85.6 | 59.6 | 67.7 | 71.0 |
 | **D-GEM** | **86.5** | **64.4** | **71.6** | **74.2** |
 
-The paper also reports lower early-to-late temporal drift for D-GEM, especially
-on long SAR-RARP50 videos, and shows complementary gains from the transient
-and evolving-anchor memory components.
+D-GEM reduces early-to-late temporal drift, especially on long SAR-RARP50
+videos, through complementary transient-memory and evolving-anchor components.
 
 ## Quick start
 
 ```bash
 git clone <repository-url>
 cd D-GEM
-conda activate pyt
+conda create -n dgem python=3.10 -y
+conda activate dgem
+# Install the PyTorch build for your CUDA/CPU platform, then:
+pip install torch torchvision
+pip install -r requirements.txt
 ```
 
 Configure label handling and training defaults in `cfg/data/base.yaml`, then
