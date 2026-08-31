@@ -17,6 +17,6 @@ conda activate pyt
 
 # fi
 
-python src/train_image.py -cfg cfg/data/train_test_image.yaml
+python src/train.py -cfg cfg/data/train_test_image.yaml
 
 conda deactivate

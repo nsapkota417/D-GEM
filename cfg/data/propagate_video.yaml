@@ -1,4 +1,5 @@
 data:
+  task_type       : 'video'
   name            : video_propagation
   num_ch          : 3
   num_class       : 10

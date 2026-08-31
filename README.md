@@ -45,3 +45,16 @@ Only four portable templates are maintained in `cfg/data/`:
 The templates point to `data/sample_dataset/sample_video.csv`; replace it and
 each `path/to/...` value with paths for your data, then set `num_class` plus
 `code_to_class` to match your label maps.
+
+## Training
+
+Use one public command for both data modes:
+
+```bash
+python src/train.py -cfg cfg/data/train_test_image.yaml
+python src/train.py -cfg cfg/data/train_test_video.yaml
+```
+
+`src/train.py` reads `data.task_type` in the selected YAML and dispatches to
+the matching image (`image`) or sequential video (`video`) workflow. Keep this
+field when creating a configuration from one of the four templates.

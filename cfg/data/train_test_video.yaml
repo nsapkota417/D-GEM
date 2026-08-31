@@ -1,4 +1,5 @@
 data:
+  task_type       : 'video'
   name            : video_train_test
   num_ch          : 3
   num_class       : 13

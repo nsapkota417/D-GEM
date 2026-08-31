@@ -17,12 +17,12 @@ conda activate pyt
 
 # fi
 
-python src/train_image.py -cfg cfg/data/train_test_image.yaml
+python src/train.py -cfg cfg/data/train_test_image.yaml
 
 
 # python src/inference_crop_padding.py -cfg cfg/data/propagate_image.yaml
 
 
-# python src/train_video.py -cfg cfg/data/train_test_video.yaml
+# python src/train.py -cfg cfg/data/train_test_video.yaml
 
 conda deactivate
