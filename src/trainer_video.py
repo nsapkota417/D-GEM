@@ -72,11 +72,10 @@ class Trainer:
 
     def save_model(self, name):
         ts = datetime.now().strftime("%m%d%H%M")
-        save_path = os.path.join(
-            self.cfg.train.model_path,
-            self.cfg.meta.name,
-            self.cfg.train.model
-        )
+        # train_video.py prepares one run-specific checkpoint directory.
+        # Older experiment configs used cfg.meta.name, which is no longer part
+        # of the public base config.
+        save_path = str(getattr(self.cfg.train, "ckpt_root", self.cfg.train.model_path))
         os.makedirs(save_path, exist_ok=True)
         model_full_path = os.path.join(save_path, f'{name}_{ts}.pth')
         torch.save(self.model.state_dict(), model_full_path)
