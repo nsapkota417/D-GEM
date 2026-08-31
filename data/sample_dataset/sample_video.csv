@@ -1,0 +1,5 @@
+img,mask,video_src,video_clip
+frames/frame000000.png,masks/frame000000.png,sample_video,sample_clip
+frames/frame000001.png,-,sample_video,sample_clip
+frames/frame000002.png,masks/frame000002.png,sample_video,sample_clip
+frames/frame000003.png,-,sample_video,sample_clip

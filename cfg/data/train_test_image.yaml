@@ -4,8 +4,8 @@ data:
   num_ch          : 3           
   num_class       : 2
   notes           : 'Set num_class and code_to_class for your labels.'
-  train           : data/manifests/train_image.csv
-  test            : data/manifests/test_image.csv
+  train           : data/sample_dataset/sample_video.csv
+  test            : data/sample_dataset/sample_video.csv
   train_vids      : []
   test_vids       : []
   include_indices : 

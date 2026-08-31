@@ -4,8 +4,8 @@ data:
   num_class       : 10
   notes           : 'Use sparse labels for support and supervised query frames.'
   root            : data/videos
-  train           : data/manifests/propagation_video.csv
-  test            : data/manifests/propagation_video.csv
+  train           : data/sample_dataset/sample_video.csv
+  test            : data/sample_dataset/sample_video.csv
 
   mask_col        : mask 
 

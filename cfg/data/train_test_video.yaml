@@ -4,8 +4,8 @@ data:
   num_class       : 13
 
   root            : data/videos
-  train           : data/manifests/train_video.csv
-  test            : data/manifests/test_video.csv
+  train           : data/sample_dataset/sample_video.csv
+  test            : data/sample_dataset/sample_video.csv
 
   mask_col        : mask
 

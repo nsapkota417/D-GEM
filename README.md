@@ -42,5 +42,6 @@ Only four portable templates are maintained in `cfg/data/`:
 - `train_test_image.yaml`
 - `train_test_video.yaml`
 
-Replace each `path/to/...` or `data/manifests/...` value with paths for your data
-and set `num_class` plus `code_to_class` to match your label maps.
+The templates point to `data/sample_dataset/sample_video.csv`; replace it and
+each `path/to/...` value with paths for your data, then set `num_class` plus
+`code_to_class` to match your label maps.
