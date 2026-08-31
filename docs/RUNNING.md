@@ -40,8 +40,43 @@ Before a new experiment, update `cfg/data/base.yaml` to match the data:
 
 The model profile is merged automatically by both public commands. Memory is
 controlled from the command line with `--use-memory` or `--no-memory` during
-training. A checkpoint must be inferred with the same model architecture,
-class count, image resolution, and memory settings used during training.
+training. A checkpoint must use the same DINOv3 variant, class count, and image
+resolution at inference; memory can be enabled later for video inference.
+
+## Modular workflow: train images, then propagate video context
+
+For an ordinary train/test split, start with **image-only training**. This
+optimizes the DINOv3 encoder and segmentation decoder on independent labeled
+rows and is often the simplest, most data-efficient baseline.
+
+D-GEM memory is essentially training-free: its per-video transient and anchor
+state is created from support masks and model predictions at inference time,
+then discarded after that video. Video fine-tuning can optionally learn the
+memory-fusion scalars, but it is not required. Consequently, an image-only
+checkpoint can be used directly for video propagation as long as the DINOv3
+variant, class count, and resize settings are unchanged:
+
+```bash
+# 1. Train the encoder/decoder with a conventional image train/test split.
+python src/train.py -cfg cfg/data/base.yaml \
+  --task-type image \
+  --train-csv /path/to/train.csv \
+  --test-csv /path/to/test.csv \
+  --no-memory
+
+# 2. Attach D-GEM memory at video inference using selected support annotations.
+python src/infer.py -cfg cfg/data/base.yaml \
+  --task-type video \
+  --support-csv /path/to/supports.csv \
+  --test-csv /path/to/test_frames.csv \
+  --weights /path/to/image_checkpoint.pth \
+  --save-preds
+```
+
+The inference runner recognizes image-only checkpoint keys and loads them into
+the video wrapper's encoder/decoder automatically. Memory-specific parameters
+that are absent from an image checkpoint retain the values in
+`cfg/model/dgem.yaml`.
 
 ## 2. CSV manifests
 

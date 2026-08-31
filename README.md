@@ -25,6 +25,7 @@ Accepted at the 29th International Conference on Medical Image Computing and Com
 ## Contents
 
 - [Overview](#overview)
+- [Modular training and inference](#modular-training-and-inference)
 - [Why D-GEM](#why-d-gem)
 - [Results from the camera-ready paper](#results-from-the-camera-ready-paper)
 - [Quick start](#quick-start)
@@ -54,6 +55,28 @@ The camera-ready paper introduces an asymmetric two-bank memory design:
 This decouples memory from the encoder, allowing the same DINOv3 representation
 to be used for image-only segmentation, sparse-video training, and annotation
 propagation.
+
+## Modular training and inference
+
+For a conventional train/test split, **image-only training is the recommended
+starting point**: it directly optimizes the DINOv3 encoder and segmentation
+decoder on independently sampled labeled images. D-GEM memory is modular and
+does not require a separately trained recurrent network or per-video learned
+state. At video inference time, it can be attached to the same image-trained
+encoder/decoder to initialize from annotated support frames and propagate
+temporal and semantic context through the remaining frames.
+
+| Stage | What is learned or built | Why it is useful |
+| --- | --- | --- |
+| Image-only train/test | DINOv3 encoder and segmentation decoder | Best fit for conventional image datasets and independent train/test partitions |
+| Video fine-tuning (optional) | The same encoder/decoder; optionally the memory-fusion scalars | Adapts predictions to sequential-video data when available |
+| Video inference / propagation | Per-video GTM/EAM state from support masks and predictions | Training-free temporal and semantic context for all test frames |
+
+The memory state is constructed on the fly for each video and is reset between
+videos. Its optional fusion scalars can be learned during video fine-tuning,
+but training is not required to use memory at inference. An image-only
+checkpoint can therefore be run in video mode with `--support-csv` to propagate
+selected annotations across a test video.
 
 ## Why D-GEM
 

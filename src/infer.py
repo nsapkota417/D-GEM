@@ -170,6 +170,18 @@ def load_weights(model, path: str, device: torch.device) -> None:
     checkpoint = torch.load(path, map_location=device)
     state = checkpoint.get("model_state_dict", checkpoint.get("state_dict", checkpoint)) if isinstance(checkpoint, dict) else checkpoint
     state = {key.removeprefix("module.").removeprefix("model."): value for key, value in state.items()}
+    # An image-only checkpoint stores DINOv3 keys directly (for example,
+    # ``encoder.*``).  Video inference wraps that same network under
+    # ``frame_model``; remap compatible keys so an image-trained encoder and
+    # decoder can be used with training-free D-GEM memory at inference time.
+    model_keys = set(model.state_dict())
+    if "frame_model.encoder.cls_token" in model_keys and not any(
+        key.startswith("frame_model.") for key in state
+    ):
+        state = {
+            f"frame_model.{key}" if f"frame_model.{key}" in model_keys else key: value
+            for key, value in state.items()
+        }
     incompatible = model.load_state_dict(state, strict=False)
     print(f"Loaded checkpoint: {path}")
     if incompatible.missing_keys or incompatible.unexpected_keys:
