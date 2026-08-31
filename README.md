@@ -8,7 +8,7 @@
 Yohannes Mariam, and Danny Z. Chen**<br>
 Department of Computer Science and Engineering, University of Notre Dame
 
-Accepted at **MICCAI 2026**.
+Accepted at the 29th INTERNATIONAL CONFERENCE ON MEDICAL IMAGE COMPUTING AND COMPUTER ASSISTED INTERVENTION (MICCAI 2026)
 
 | Paper | Code | Practical guide |
 | --- | --- | --- |
