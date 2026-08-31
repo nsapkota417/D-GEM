@@ -1,9 +1,9 @@
-# Compatibility profile for independent image segmentation.
-# It supplies the D-GEM memory parameters while disabling all memory reads/writes.
+# D-GEM asymmetric dual-memory settings. Toggle it globally with
+# `python src/train.py ... --use-memory` or `--no-memory`.
 train:
   K: 20
   max_dt: 64
-  use_memory: false
+  use_memory: true
   use_tm: true
   use_am: true
   am_max_items: 8

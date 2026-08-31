@@ -35,32 +35,26 @@ loss only on the annotated query frames.
 
 ### Configuration templates
 
-Only four portable templates are maintained in `cfg/data/`:
-
-- `propagate_image.yaml`
-- `propagate_video.yaml`
-- `train_test_image.yaml`
-- `train_test_video.yaml`
-
-The templates point to `data/sample_dataset/sample_video.csv`; replace it and
-each `path/to/...` value with paths for your data, then set `num_class` plus
-`code_to_class` to match your label maps.
+Only one portable base config is maintained: `cfg/data/base.yaml`. It contains
+training defaults and label-map placeholders; point the command at your CSV
+manifest(s) instead of creating a config per dataset or split.
 
 ## Training
 
 Use one public command for both data modes:
 
 ```bash
-python src/train.py -cfg cfg/data/train_test_image.yaml
-python src/train.py -cfg cfg/data/train_test_video.yaml
+python src/train.py -cfg cfg/data/base.yaml \
+  --task-type video \
+  --train-csv /path/to/train.csv \
+  --test-csv /path/to/test.csv \
+  --use-memory
 ```
 
-`src/train.py` reads `data.task_type` in the selected YAML and dispatches to
-the matching image (`image`) or sequential video (`video`) workflow. Keep this
-field when creating a configuration from one of the four templates.
+Use `--task-type image` for independent image segmentation or `--task-type
+video` for sequential D-GEM. `--data-csv` supplies one CSV for both splits;
+`--train-csv` and `--test-csv` set them independently.
 
-Each base config declares a `model_config` profile. `src/train.py` deep-merges
-that file before starting the selected workflow. The video templates use
-`cfg/model/dgem_memory.yaml`; image templates use `cfg/model/no_memory.yaml`.
-To test another memory profile without editing the base config, pass
-`--model-config cfg/model/dgem_memory.yaml` on the command line.
+`src/train.py` deep-merges the single `cfg/model/dgem.yaml` profile before
+starting the selected workflow. Control memory with `--use-memory` or
+`--no-memory`; no separate no-memory profile is needed.

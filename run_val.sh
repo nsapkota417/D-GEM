@@ -17,6 +17,9 @@ conda activate pyt
 
 # fi
 
-python src/train.py -cfg cfg/data/train_test_image.yaml
+python src/train.py -cfg cfg/data/base.yaml \
+  --task-type video \
+  --test-csv /path/to/test.csv \
+  --use-memory
 
 conda deactivate

@@ -39,6 +39,25 @@ def parse_args() -> argparse.Namespace:
         default=None,
         help="Optional model YAML overriding the model_config declared in the base config.",
     )
+    parser.add_argument(
+        "--task-type",
+        choices=tuple(WORKFLOWS),
+        help="Override data.task_type in the base config.",
+    )
+    parser.add_argument(
+        "--data-csv",
+        help="Use one CSV manifest for both training and evaluation.",
+    )
+    parser.add_argument("--train-csv", help="CSV manifest for training.")
+    parser.add_argument("--test-csv", help="CSV manifest for evaluation.")
+    memory_group = parser.add_mutually_exclusive_group()
+    memory_group.add_argument(
+        "--use-memory", dest="use_memory", action="store_true", help="Enable D-GEM memory."
+    )
+    memory_group.add_argument(
+        "--no-memory", dest="use_memory", action="store_false", help="Disable D-GEM memory."
+    )
+    parser.set_defaults(use_memory=None)
     return parser.parse_known_args()[0]
 
 
@@ -62,7 +81,7 @@ def resolve_model_config(
 
     model_path = Path(model_config).expanduser()
     if not model_path.is_absolute():
-        model_path = config_path.parent / model_path
+        model_path = (Path.cwd() if cli_model_config else config_path.parent) / model_path
     if not model_path.is_file():
         raise FileNotFoundError(f"Model config file not found: {model_path}")
 
@@ -86,7 +105,7 @@ def workflow_argv(merged_config: dict[str, Any]) -> tuple[list[str], Path]:
 
     argv = [sys.argv[0]]
     skip_next = False
-    for index, argument in enumerate(sys.argv[1:], start=1):
+    for argument in sys.argv[1:]:
         if skip_next:
             skip_next = False
             continue
@@ -95,9 +114,13 @@ def workflow_argv(merged_config: dict[str, Any]) -> tuple[list[str], Path]:
             skip_next = True
         elif argument.startswith("--config="):
             argv.append(f"--config={merged_path}")
-        elif argument in {"-m_cfg", "--model-config"}:
+        elif argument in {
+            "-m_cfg", "--model-config", "--task-type", "--data-csv", "--train-csv", "--test-csv"
+        }:
             skip_next = True
-        elif argument.startswith("--model-config="):
+        elif argument.startswith(("--model-config=", "--task-type=", "--data-csv=", "--train-csv=", "--test-csv=")):
+            continue
+        elif argument in {"--use-memory", "--no-memory"}:
             continue
         else:
             argv.append(argument)
@@ -120,6 +143,16 @@ def main() -> None:
     if not isinstance(data, dict):
         raise ValueError("Config must contain a top-level 'data' mapping.")
 
+    if args.task_type:
+        data["task_type"] = args.task_type
+    if args.data_csv:
+        data["train"] = args.data_csv
+        data["test"] = args.data_csv
+    if args.train_csv:
+        data["train"] = args.train_csv
+    if args.test_csv:
+        data["test"] = args.test_csv
+
     task_type = str(data.get("task_type", "")).lower()
     workflow = WORKFLOWS.get(task_type)
     if workflow is None:
@@ -129,6 +162,8 @@ def main() -> None:
         )
 
     merged_config = resolve_model_config(config, config_path, args.model_config)
+    if args.use_memory is not None:
+        merged_config.setdefault("train", {})["use_memory"] = args.use_memory
     original_argv = sys.argv
     sys.argv, merged_path = workflow_argv(merged_config)
     try:

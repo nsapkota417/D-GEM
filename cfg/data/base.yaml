@@ -1,35 +1,32 @@
-model_config: ../model/dgem_memory.yaml
+model_config: ../model/dgem.yaml
 
 data:
   task_type       : 'video'
-  name            : video_propagation
+  name            : dgem_dataset
   num_ch          : 3
-  num_class       : 10
-  notes           : 'Use sparse labels for support and supervised query frames.'
-  root            : data/videos
+  num_class       : 2
+
+  root            : data
   train           : data/sample_dataset/sample_video.csv
   test            : data/sample_dataset/sample_video.csv
-
-  mask_col        : mask 
-
+  img_col          : img
+  mask_col        : mask
+  train_vids      : []
+  test_vids       : []
+  include_indices :
+  use_rep_only    : false
+  use_half        : false
+  modality        :
 
   ignore_index    : 255
 
   # Grayscale palette -> class id
   code_to_class:
     0:  0    # background
-    1:  1    # tool_clasper
-    2:  2    # tool_wrist
-    3:  3    # tool_shaft
-    4:  4    # suturing_needle
-    5:  5    # thread
-    6:  6    # suction_tool
-    7:  7    # needle_holder
-    8:  8    # clamps
-    9:  9    # catheter
-    255: 255 # ignore (optional, if you use ignore masks)
+    1:  1    # foreground example; replace for your labels
+    255: 255 # ignore
 
-  label_json      : 
+  label_json      : ''
 
 # EXPERIMENT SETUP
 
@@ -38,36 +35,37 @@ experiment:
   notes         : 'Set num_class and code_to_class for your labels.'
   seed          : 417
   debug         : False
-  SUFFX         : 'video_propagation'
+  SUFFX         : 'dgem'
+  project_path  : outputs/dgem
 
 train:
   save_every: 5
-  use_raw_logits : True
-  aux_raw_w     : 0.2
-
   debug         : [False, False]
-
+  use_raw_logits : False
+  aux_raw_w     : 0.2
   t_query       : 10           # number of training frames to sample per video
   s_support     : 5           # number of support frames
-  allowed_max_items: 500
+  sample_in_video: false
+  allowed_max_items: 100
   allowed_seed: 1337
   allowed_kwin: 2
-  allowed_strict_consecutive: true
+  allowed_strict_consecutive: True
   jitter        : 0            # jitter around frames 
   epoch_salt    : 0
 
   use_stream    : True
-  rollout_len   : 80        # e.g. 80 frames processed per clip
-  rollout_mode  : "full"    # window | allowed | full
+  rollout_len   : 20        # e.g. 80 frames processed per clip
+  rollout_mode  : "full" # window | allowed | full
   loss_on_query_indices_only: True
   resize_h      : 480
   resize_w      : 854
   eval_only     : False
   bs            : 1
   num_workers   : 4
-  model_path    : outputs/video_propagation
+  model_path    : outputs/dgem
+  ckpt_to_use   : ''
 
-  epochs        : 20
+  epochs        : 200
 
 
   cs            : [256, 256] # [256, 256]
@@ -76,9 +74,9 @@ train:
   lr_dec        : 0.0002
   dice_weight   : 0.1
   dice_inc_bg   : False
-  amp           : True
+  amp           : False
 
-  model         : dv3_vits16plus      # dv3_vits16plus, _vitb16, _vitl16,
+  model         : dv3_vits16plus # dv3_vits16plus, _vitb16, _vitl16,
                                       # sam2.1_small, _tiny, _large,
                                       # xmem
   # DV3 SEG
@@ -96,17 +94,27 @@ train:
 
 
 val:
-  use_stream          : True, 
-  rollout_len         : 275
-  val_t_query         : -1
-  val_every           : 1
+  eval_only           : false
+  save_outputs        : false
+  bs                  : 1
+  val_rows            : -1
+  res_dir             : outputs/dgem
+  max_samples         : 500
+  val_t_query         : 10
+  val_every           : 10
+  use_stream          : False
   rollout_mode        : window
+  rollout_len         : 200
   rollout_start_idx   : 1
+
+
+
 
   wandb_vis           : False
   wandb_vis_every     : 50
   wandb_vis_max       : 2
   wandb_vis_frames    : 3
+
 
   save_preds_every: 10       # dump preds+GT every N epochs
   save_preds_max_batches: 2  # limit number of videos per epoch

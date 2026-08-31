@@ -17,12 +17,16 @@ conda activate pyt
 
 # fi
 
-python src/train.py -cfg cfg/data/train_test_image.yaml
+python src/train.py -cfg cfg/data/base.yaml \
+  --task-type video \
+  --train-csv /path/to/train.csv \
+  --test-csv /path/to/test.csv \
+  --use-memory
 
 
 # python src/inference_crop_padding.py -cfg cfg/data/propagate_image.yaml
 
 
-# python src/train.py -cfg cfg/data/train_test_video.yaml
+# For independent images, use: --task-type image --no-memory
 
 conda deactivate
