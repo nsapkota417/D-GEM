@@ -1,24 +1,11 @@
-#!/bin/bash
-#$ -q gpu@@csecri-v100          #gpu@@csecri-v100 # gpu@@crc_gpu, gpu@@csecri
-#$ -l gpu=1
-#$ -M nsapkota@nd.edu
-#$ -m abe
-#$ -r y
-#$ -o crclogs/$JOB_ID.out
-#$ -e crclogs/$JOB_ID.err
-#$ -pe smp 6
+#!/usr/bin/env bash
+set -euo pipefail
 
-source /users/nsapkota/afs/.bashrc 
-conda activate pyt
+# Activate your Python environment before running this script.
 
-# export CUDA_VISIBLE_DEVICES="${SGE_HGR_gpu_card// /,}"
-# if [ -z ${SGE_HGR_gpu_card+x} ]; then 
-#         SGE_HGR_gpu_card=-1
-
-# fi
-
-python src/inference_crop_padding.py -cfg cfg/data/propagate_image.yaml
-# python src/inference.py -cfg cfg/data/propagate_image.yaml
-
-conda deactivate
-
+python src/infer.py -cfg cfg/data/base.yaml \
+  --task-type video \
+  --support-csv /path/to/support.csv \
+  --test-csv /path/to/test.csv \
+  --weights /path/to/model.pt \
+  --save-preds

@@ -30,7 +30,7 @@ from dataset_image import ImageSegDataset, image_collate
 
 
 start = time.time()
-default_config = "/users/nsapkota/VOS/cfg/data/cholecseg8k.yaml"
+default_config = "cfg/data/base.yaml"
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-cfg", "--config", default=default_config)

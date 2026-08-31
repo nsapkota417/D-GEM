@@ -1,4 +1,5 @@
 import json
+import os
 import re
 from pathlib import Path
 from typing import Dict, Any, List, Tuple, Optional, Callable, Union
@@ -549,13 +550,21 @@ for name in names:
         num_classes = 12
 
         # This JSON looks like your RGB palette list; apply to GT.
-        gt_mapping = "/users/nsapkota/VOS/data/datasets/endovis/labels.json"
+        gt_mapping = os.environ.get("DGEM_GT_MAPPING")
+        if not gt_mapping:
+            raise ValueError(
+                "Set DGEM_GT_MAPPING to the local EndoVis label-mapping JSON path."
+            )
         pred_mapping = gt_mapping # None  # if pred already 0..11
 
     else:
         raise ValueError(f"Unknown dataset name: {name}")
 
-    root = f"/groups/dchen/mxs/sam3_svss/predictions_every20/{name}"
+    root = os.environ.get("DGEM_EVAL_ROOT")
+    if not root:
+        raise ValueError(
+            "Set DGEM_EVAL_ROOT to the directory containing prediction and GT folders."
+        )
 
     results = eval_masks_folder_phase_by_count(
         root=root,

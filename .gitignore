@@ -38,8 +38,8 @@ data/processed/
 *.h5
 *.hdf5
 
-# Cluster logs and job artifacts
-crclogs/
+# Logs and job artifacts
+logs/
 *.out
 *.err
 *.log

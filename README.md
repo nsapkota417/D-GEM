@@ -91,7 +91,7 @@ and evolving-anchor memory components.
 ## Quick start
 
 ```bash
-git clone https://github.com/nsapkota417/D-GEM.git
+git clone <repository-url>
 cd D-GEM
 conda activate pyt
 ```

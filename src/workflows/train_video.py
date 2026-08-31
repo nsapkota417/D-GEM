@@ -24,7 +24,7 @@ from trainer_video import Trainer
 from dataset_video import SVSSDataset, svss_collate, svss_collate_stream, worker_init_fn
 
 start = time.time()
-default_config = "/users/nsapkota/VOS/cfg/data/cholecseg8k.yaml"
+default_config = "cfg/data/base.yaml"
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-cfg", "--config", default=default_config)
@@ -255,8 +255,13 @@ if "sam2" in cfg.train.model:
     )
 
 elif "xmem" in cfg.train.model:
+    xmem_checkpoint = getattr(cfg.train, "xmem_checkpoint", "")
+    if not xmem_checkpoint:
+        raise ValueError(
+            "XMem requires train.xmem_checkpoint to point to a local XMem checkpoint."
+        )
     xmem = XMemSVSSWrapper(
-        ckpt_path="/users/nsapkota/VOS/src/baselines/XMem/XMem.pth",
+        ckpt_path=xmem_checkpoint,
         num_classes=cfg.data.num_class,
         device=device,
         mem_every=5,
@@ -275,6 +280,11 @@ elif "xmem" in cfg.train.model:
     ).cuda().train()
 
 elif 'stm' in cfg.train.model:
+    stm_checkpoint = getattr(cfg.train, "stm_checkpoint", "")
+    if not stm_checkpoint:
+        raise ValueError(
+            "STM requires train.stm_checkpoint to point to a local STM checkpoint."
+        )
 # 1) build frozen STM core
     stm_core = STMBaselineWrapper(
         num_classes=cfg.data.num_class,
@@ -290,7 +300,7 @@ elif 'stm' in cfg.train.model:
         conf_thr=0.60,
     )
 
-    stm_core.load_pretrained('/users/nsapkota/VOS/src/baselines/STM/STM_weights.pth')
+    stm_core.load_pretrained(stm_checkpoint)
 
     # 2) wrap with trainable calibration head
     model = STMCalibWrapper(
