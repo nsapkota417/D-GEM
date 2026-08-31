@@ -84,14 +84,6 @@ train:
   ft_encoder    : True
   unfreeze_epoch   : 0
 
-  # SAM2
-  sam2_enhanced: True
-  sam2_topk_per_class: 3
-  sam2_reprompt_every: 10
-  sam2_cc_min_area: 25
-  sam2_reprompt_cc_min_area: 50
-  sam2_reprompt_prob_thresh: 0.35
-
 
 val:
   eval_only           : false
@@ -106,9 +98,6 @@ val:
   rollout_mode        : window
   rollout_len         : 200
   rollout_start_idx   : 1
-
-
-
 
   wandb_vis           : False
   wandb_vis_every     : 50
