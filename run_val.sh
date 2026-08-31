@@ -17,8 +17,7 @@ conda activate pyt
 
 # fi
 
-python src/train_img_demo.py -cfg /users/nsapkota/VOS/cfg/data/demo_val.yaml
+python src/train_image.py -cfg cfg/data/demo_val.yaml
 
 conda deactivate
-
 

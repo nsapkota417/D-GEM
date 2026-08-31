@@ -22,7 +22,7 @@ echo -e "Starting Experiment =)"
 echo -e "=-=-=-=-=-=-=-=-=-=-=-=-=\\n"
 cd {src_path}
 
-python src/train.py -cfg {config_file}
+python src/train_video.py -cfg {config_file}
 """
 
 class Job:
