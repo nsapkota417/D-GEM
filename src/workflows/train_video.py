@@ -148,8 +148,16 @@ with banner():
 
 # ---- data
 def normalize_df(df: pd.DataFrame) -> pd.DataFrame:
-    df["video_src"]  = df["video_src"].fillna("").astype(str)
-    df["video_clip"] = df["video_clip"].fillna("").astype(str)
+    if "video_src" not in df.columns:
+        raise ValueError("Video manifests require a 'video_src' column.")
+
+    df = df.copy()
+    df["video_src"] = df["video_src"].fillna("").astype(str)
+    if "video_clip" not in df.columns:
+        # A manifest with one clip per video needs only video_src.
+        df["video_clip"] = df["video_src"]
+    else:
+        df["video_clip"] = df["video_clip"].fillna("").astype(str)
     return df
 
 train_df = normalize_df(pd.read_csv(cfg.data.train))

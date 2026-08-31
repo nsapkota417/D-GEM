@@ -69,10 +69,13 @@ class SVSSDataset(Dataset):
             self.val_t_query = int(val_t_query)
 
         # --- required columns
-        required = {"img", "video_src", "video_clip", self.mask_col}
+        required = {"img", "video_src", self.mask_col}
         missing = required - set(self.df.columns)
         if missing:
             raise ValueError(f"DataFrame missing required columns: {missing}")
+        if "video_clip" not in self.df.columns:
+            self.df = self.df.copy()
+            self.df["video_clip"] = self.df["video_src"]
 
         # --- build LUT for code->class mapping
         self.lut = np.full(256, self.ignore_index, dtype=np.uint8)
