@@ -1,11 +1,5 @@
 # D-GEM: Sparsely Supervised Surgical Video Segmentation with Reliable Asymmetric Dual Memory
 
-<p align="center">
-  <a href="https://conferences.miccai.org/2026/en/" aria-label="MICCAI 2026">
-    <img src="assets/miccai2026-banner.jpg" alt="MICCAI 2026, Strasbourg, France" width="667">
-  </a>
-</p>
-
 > D-GEM combines a DINOv3 segmentation backbone with reliability-gated
 > transient memory and evolving semantic anchors for long, sparsely annotated
 > surgical videos.
@@ -14,7 +8,7 @@
 Yohannes Mariam, and Danny Z. Chen**<br>
 Department of Computer Science and Engineering, University of Notre Dame
 
-Accepted at the 29th INTERNATIONAL CONFERENCE ON MEDICAL IMAGE COMPUTING AND COMPUTER ASSISTED INTERVENTION (MICCAI 2026)
+Accepted at the 29th International Conference on Medical Image Computing and Computer Assisted Intervention (MICCAI 2026).
 
 <p align="center">
   <a href="https://conferences.miccai.org/2026/en/PROMOTIONAL-KIT.html">
