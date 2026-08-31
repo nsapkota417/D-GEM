@@ -34,7 +34,6 @@ default_config = "/users/nsapkota/VOS/cfg/data/cholecseg8k.yaml"
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-cfg", "--config", default=default_config)
-parser.add_argument("-m_cfg", "--model_config", default=None)
 args = parser.parse_args()
 
 
@@ -43,11 +42,6 @@ args = parser.parse_args()
 # -----------------------------
 with open(args.config, "r") as f:
     cfg_dict = yaml.load(f, Loader=yaml.FullLoader)
-
-if args.model_config:
-    with open(args.model_config, "r") as f:
-        model_cfg_dict = yaml.load(f, Loader=yaml.FullLoader)
-    cfg_dict.update(model_cfg_dict)
 
 cfg = nested_dotdict(cfg_dict)
 

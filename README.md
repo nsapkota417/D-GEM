@@ -58,3 +58,9 @@ python src/train.py -cfg cfg/data/train_test_video.yaml
 `src/train.py` reads `data.task_type` in the selected YAML and dispatches to
 the matching image (`image`) or sequential video (`video`) workflow. Keep this
 field when creating a configuration from one of the four templates.
+
+Each base config declares a `model_config` profile. `src/train.py` deep-merges
+that file before starting the selected workflow. The video templates use
+`cfg/model/dgem_memory.yaml`; image templates use `cfg/model/no_memory.yaml`.
+To test another memory profile without editing the base config, pass
+`--model-config cfg/model/dgem_memory.yaml` on the command line.

@@ -1,3 +1,5 @@
+model_config: ../model/no_memory.yaml
+
 inf:
   weights: path/to/checkpoint.pth
   video: path/to/input_video.mp4
@@ -109,82 +111,6 @@ train:
   sam2_cc_min_area: 25
   sam2_reprompt_cc_min_area: 50
   sam2_reprompt_prob_thresh: 0.35
-
-  # ---- memory (ABD v2: reliability + attention)
-  K                   : 20        # TM keeps last K / # of C items 
-  max_dt              : 64       # temporal PE window
-  use_memory          : False    # enable memory
-  use_tm              : True    # use transient memory
-  use_am              : True    # use anchor memory
-
-  # ---- AM (Anchor Memory) budget + attention bias 
-  am_max_items         : 8        # max pinned+unpinned anchors per video
-  am_red_lambda        : 0.5      # redundancy penalty for eviction
-  am_attn_beta         : 2.0      # log(w) bias strength in AM attention
-  am_keep_k            : 256      # top-k FG patches kept per anchor/class (support)
-  attn_topk_am         : 256      # AM read top-k (can be > TM)
-  attn_topk_tm         : 128      # TM read top-k
-
-  use_mem_attention   : True     # enable attention-based read
-  attn_sharp          : 80     # attention softmax temperature
-
-  enable_am_refresh: True  # if you want multi-anchor from multi-support
-  skip_tm_t0: True
-
-  am_refresh_sim_max: 0.90
-  am_max_per_class: 3
-
-  use_abs_time: True
-  max_time_index: 4096
-
-  detach_memory: True      # only if you also pass it into SVSSWrapper
-
-  # ---- fusion (asymmetric trust)
-  alpha_am            : 0.15     # anchor memory weight
-  alpha_tm            : 0.15     # transient memory weight
-  learnable_alpha     : True     # Fusion weights for memory lernable
-
-  # ---- write / read compression
-  write_topk_patch_tokens : 128  # store top-128 tokens per TM frame
-  read_topk_mem_tokens    : 0    # disable global read pruning
-
-  # ---- TM warmup
-  tm_warmup           : 1        # start TM writes at t >= tm_warmup
-
-  # ---- reliability gate (02/12)
-  gate_mode           : conf+ent  # off | conf | ent | conf+ent
-  gate_conf_thr       : 0.12     # min mean confidence to write TM
-  gate_ent_thr        : 0.99     # max mean entropy to write TM
-
-
-  # ------------------------------------------------------------
-  # Pseudo-Anchor gate (AM from predictions) — NEW
-  # ------------------------------------------------------------
-  allow_pseudo_anchors : True      # OFF by default (safe)
-
-  # cadence
-  pseudo_every         : 1           # try pseudo-anchor every N frames
-  pseudo_warmup        : 0            # delay before allowing pseudo-anchors
-
-  # probability / quality thresholds
-  pseudo_tau           : 0.8         # pixel prob threshold for region mask
-  pseudo_q99_thr       : 0.9        # 99th percentile prob threshold
-  pseudo_mean_in_thr   : 0.7        # mean prob inside region
-  pseudo_min_area      : 0.001        # min region area (fraction of frame)
-  pseudo_max_area      : 0.20         # max region area
-
-  # temporal stability
-  pseudo_streak_req    : 1            # consecutive passes required
-
-  # storage / influence
-  pseudo_k_am          : 128          # #patch tokens per pseudo-anchor
-  pseudo_max_per_class : 1            # cap pseudo-anchors per class
-  pseudo_conf_scale    : 0.25         # down-weight conf vs GT anchors
-  pseudo_w_scale       : 0.50         # down-weight read contribution
-
-  # logits source
-  pseudo_use_fused_logits : True      # true: final logits | false: raw logits
-
 
 
 val:
