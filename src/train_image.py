@@ -18,7 +18,7 @@ from transformers import Sam2VideoModel, Sam2VideoProcessor
 from networks.sam2_wrapper import SAM2SVSSWrapper
 
 from utils import nested_dotdict, run_training, banner, build_optimizer, DiceCELoss
-from trainer_img import Trainer, inference_with_miou
+from trainer_image import Trainer, inference_with_miou
 
 from dataset_video import (
     SVSSDataset,

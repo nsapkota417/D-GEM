@@ -19,7 +19,7 @@ from networks.raft_wrapper import RAFTFlowPropWrapper, RAFTFlowCalibWrapper, Sup
 
 
 from utils import nested_dotdict, run_training, banner, build_optimizer, DiceCELoss
-from trainer import Trainer
+from trainer_video import Trainer
 
 from dataset_video import SVSSDataset, svss_collate, svss_collate_stream, worker_init_fn
 
