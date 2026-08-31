@@ -1,0 +1,7 @@
+/opt/sge/crc/spool/d32cepyc192/job_scripts/981660: line 1: import: command not found
+/opt/sge/crc/spool/d32cepyc192/job_scripts/981660: line 2: import: command not found
+/opt/sge/crc/spool/d32cepyc192/job_scripts/981660: line 3: from: command not found
+/opt/sge/crc/spool/d32cepyc192/job_scripts/981660: line 4: from: command not found
+/opt/sge/crc/spool/d32cepyc192/job_scripts/981660: line 5: import: command not found
+/opt/sge/crc/spool/d32cepyc192/job_scripts/981660: line 11: syntax error near unexpected token `('
+/opt/sge/crc/spool/d32cepyc192/job_scripts/981660: line 11: `SRC_PATH = str(pathlib.Path().absolute())'

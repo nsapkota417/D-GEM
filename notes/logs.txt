@@ -1,0 +1,169 @@
+- Components
+    1. ~~Dataloader (02/09)~~
+    2. Loss Functions (02/09)
+        - [x]  Basic
+        - [ ]  Temporal / Consistency
+    3. Evaluation (02/09)
+        - [x]  mIoU
+        - [ ]  Dice
+        - [ ]  Temporal Consistency
+        - [ ]  Segmentation Visualizations
+    4. ~~Encoder (02/10)~~
+    5. ~~Decoder (02/10)~~
+    6. Memory System (02/11-12)
+        1. Memory Units 
+            - [ ]  Anchor Memory
+            - [ ]  Transient Memory
+            - [ ]  Temporal PE
+        2. Query Mechanisms 
+            - [ ]  AM Query
+            - [ ]  TM Query
+        3. Update & Eviction 
+            - [ ]  AM Update
+            - [ ]  TM Update
+            - [ ]  Eviction/Pruning Policy
+        4. Memory State Manager
+        5. Memory Compression/Controller Tokens
+    7. Memory Attentions (02/12)
+    8. Reliability Gating (02/12)
+        - [ ]  Basic
+        - [ ]  Flow-based
+    9. Recovery Module (02/15)
+    
+
+
+3.2 Reliability-Gated Dual Memory Bank
+3.3 Attention-Based Memory Retrieval
+3.4 Controller-Guided Update Mechanism
+
+--------------
+
+02/11
+
+    MemoryState
+     ├── AnchorMemory (AM)    -- Update Only
+     ├── TransientMemory (TM) -- Eviction 
+     ├── TemporalPE           -- Learnable
+     └── update(), prune(), export()
+
+    Tasks:
+
+    ✅ Built a working dual-memory system (Anchor + Transient) with per-video isolation
+    ✅ Added temporal position encoding to all memory tokens
+    ✅ Implemented selective spatial memory with TopK + centered cosine scoring
+    ✅ Introduced separate AM/TM fusion weights for stable memory use
+    ✅ Added TM warmup delay to prevent early-frame noise
+
+    INTRESTING ADDITIONS:
+    1. Dual-Memory with Asymmetric Trust  
+    2. Temporal Warmup to Prevent Memory Poisoning  
+    3. Bounded Memory Compression via Selective feature Token Retention in Memory
+
+
+    TO TRY:
+    1. TopK selection more spatially diverse (quadrant diversity)
+    2. Compute time memory pruning for reading 
+
+
+--------------
+
+02/12
+
+    MemoryState v2
+    ├── Reliability-aware writes   ✅ (today)
+    ├── Attention-based reads      ✅ (today)
+    ├── Quality metadata           ⏳ (later)
+    └── Adaptive eviction          ⏳ (later)
+
+    SVSSWrapper v2
+    ├── Gate TM updates            ✅
+    ├── Attention read             ✅
+    ├── Mask-guided AM             ✅
+    └── Flow module                ⏳
+
+    Tasks:
+
+    ✅ Implemented attention-based AM/TM read with _attn_ctx_tokens
+    ✅ Added prototype-based TM pruning before attention
+    ✅ Stabilized memory fusion using alpha_scale warmup (t=2→7)
+    ✅ Set tm_warmup = 1 to allow early TM population
+    ✅ Added top-k foreground patch selection for TM writes (k≈256)
+    ✅ Introduced foreground sharpening (tau_fg, power=2) for cleaner TM tokens
+    ✅ Verified AM/TM population and attention behavior across frames
+    ✅ Tuned TM read candidate size (tm_read_k ≈ 128)
+
+------------
+
+02/13
+
+    Tasks:
+    ✅ Implemented per-class Anchor Memory (class_id per anchor)
+    ✅ Added per-class support mask slicing
+    ✅ Added FG-only top-k patch selection for AM writes
+    ✅ Stored per-token mask weights (w) in AM
+    ✅ Implemented mask-conditioned attention bias (mem_w + beta)
+    ✅ Added separate attn_topk_am and attn_topk_tm
+    ✅ Enabled learnable alpha_am and alpha_tm
+    ✅ Added AM budget enforcement with redundancy-aware eviction
+    ✅ Fixed eviction to exclude self-proto in redundancy score
+
+
+    LIMITTAIONS:
+
+    1. ATM, 1 support per clip.
+    3. Works for batch = 1 only.
+
+------------  
+
+02/14
+
+    ✅ Some experiments with different weights of dice Loss
+    ✅ Fixed submission script
+
+------------
+
+02/14
+
+    TODO:
+    1. 3 part Video Segmentation metric
+
+------------
+
+04/04
+
+    CNH
+
+    Images: /groups/dchen/mxs/processed_data/CNI/images/NE
+        naming: 00001.jpg 
+    
+    Masks: /groups/dchen/bz/data/childrensHospital/masks/NE/all
+        naming: 00001.png
+        shape: (720, 1280)
+
+    Selected frames: /groups/dchen/mxs/ne_256_selection_results.txt
+
+
+MD: /groups/dchen/mxs/processed_data/CNI/CNI_Dataset_Summary.md
+
+'/groups/dchen/bz/data/childrensHospital/masks/NE/all/00001.png'
+
+
+img = Image.open('/groups/dchen/bz/data/childrensHospital/masks/NE/all/00010.png')
+
+
+/groups/dchen/mxs/processed_data/CNI/images/NE/31082.jpg
+
+------------
+
+04/24
+
+    CNH - PE
+
+------------
+
+05/23 
+
+    SARRP50 For Xianshi
+    Multimodality
+
+    Lables: /groups/dchen/mxs/sarrarp50_dgem_task/clustering_30pct_of_masks

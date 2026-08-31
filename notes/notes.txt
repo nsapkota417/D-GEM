@@ -1,0 +1,74 @@
+Cholecseg8k
+
+    TRAIN (76 Clips, 13 sources)
+
+        video01/ : 16
+        video09/ : 3
+        video12/ : 8
+        video17/ : 4
+        video18/ : 2
+        video20/ : 2
+        video24/ : 12
+        video25/ : 4
+        video26/ : 4
+        video27/ : 5
+        video28/ : 7
+        video35/ : 3
+        video37/ : 6
+
+    TEST (25 Clips, 5 sources):
+
+        video43/ : 9
+        video48/ : 3
+        video52/ : 10
+        video55/ : 3
+
+----------------------------------------
+
+Multiple Sparse Annotations; introduces temporal drift.
+Apparance + objectness + temporal
+
+Exactly what goes in memory? Operation, Cost 
+What operation is memory attention? Operation, Cost
+Motivation for Anchor Memory?
+Limitations of Transient Memory?
+
+
+TM : High-recall
+AM : High-precision
+
+
+root/
+    train/
+        video_01/
+            frames_1hz/
+                *.pngs
+            segmentation/
+                *.pngs
+
+img,mask,video_src,video_clip
+
+img is img path
+mask is mask path
+video_src is the video_XX folder name
+video_clip in this case is just empty
+
+
+----
+
+root/
+    seq_X/
+        labels/
+            *.pngs
+        left_frames/
+            *.pngs
+
+generate train and test CSV with cols:
+img,mask,video_src,video_clip
+
+------
+
+
+CNH:
+
+    

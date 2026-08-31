@@ -1,0 +1,39 @@
+# 07.26 
+
+    Lightweight DGEM for DEMO
+        -> Use pre-trained model and segment the given unseen video
+    
+    Data Src:
+        /groups/dchen/bz/data/CisionVision/cisionvision/
+
+        Structure:
+            task_102_cityscapes
+                -> imgsFine
+                    -> leftImg8bit
+                        -> "default"
+                            -> *.png 
+                -> prepared_labels
+                    -> facial_nerve_e
+                        -> *.png
+
+        Note: "job_53_cityscapes/imgsFine/leftImg8bit/11_25", instead of "default" has "11_25"
+        Note: Train with 800 × 1024
+
+    Dataset Info:
+
+        Folder                     # Frames     Resolution          # GT 
+        ------------------------- ----------    ----------          ----------
+        task_102_cityscapes             1355    904×1132             535
+        task_103_cityscapes             1355    902×1132             620
+        task_104_cityscapes             1355    908×1136             409
+        task_105_cityscapes             1673    908×1136             151
+        task_107_cityscapes             5952    906×1138             557        
+
+        job_88_cityscapes               3834    904×1132             88     TEST
+        task_106_cityscapes             2052    904×1132             183    TEST
+        ------------------------- ----------    ----------          ----------
+        
+        OTHERS:
+
+        job_53_cityscapes                807    1080×1920            150    EXCLUDE (OLDER)
+        job_89_cityscapes               1355    904×1132             127    EXCLUDE (SAME AS 102)

@@ -1,0 +1,51 @@
+# Python-generated files
+__pycache__/
+*.py[cod]
+*.so
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Local environments and notebook checkpoints
+.venv/
+venv/
+env/
+.env
+.env.*
+.ipynb_checkpoints/
+
+# Training outputs, checkpoints, and visualizations
+results/
+results_cisvismm/
+results_xma/
+miccai_viz/
+wandb/
+checkpoints/
+weights/
+*.ckpt
+*.pth
+*.pt
+*.onnx
+
+# Datasets and derived artifacts (retain source code and data/meta/*.csv)
+data/datasets/
+data/raw/
+data/processed/
+*.npy
+*.npz
+*.h5
+*.hdf5
+
+# Cluster logs and job artifacts
+crclogs/
+*.out
+*.err
+*.log
+slurm-*.out
+
+# OS/editor files
+.DS_Store
+.vscode/
+.idea/

@@ -1,0 +1,10 @@
+not to include
+
+    /crclogs
+    /exp
+    /miccai_viz
+    /results*
+    /wandb
+
+
+cp -a VOS DGEM

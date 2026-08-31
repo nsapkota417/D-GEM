@@ -1,0 +1,46 @@
+05.26.2026
+
+swir & whitelight data:
+"/groups/dchen/bz/data/CisionVision/images/JHU_Lab_0826/"
+
+coresponding sam2 predictions:
+SWIR: "/groups/dchen/bz/Representative/output_jhulab_new/"                          -- DOWNLOADING
+whitelight:"/groups/dchen/bz/Representative/output_jhulab_white_light_new/"
+
+The directory structure for each case:
+
+frame_XXXXXX.png — Overlay visualization
+mask_frame_XXXXXX.png — The actual mask (this is the one you can use)
+side_by_side/frame_XXXXXX_comparison.png
+propagation_video.mp4 / propagation_video_side_by_side.mp
+
+
+
+NOTES:
+
+use "mask_frame_*.png"
+
+01:
+    SWIR:       2010 frames 
+        # frame_*.png
+
+    WL:         2010 frames 
+        # frame_*.png
+        # use only after frame_000107.
+
+
+--------------------------------------------------------------------------------
+
+Labeled Frames:
+
+    ureter_1min WL reps: 12
+    ureter_1min SWIR reps: 21
+
+    ureter_15min WL reps: 153
+    ureter_15min SWIR reps: 153
+
+    thoracic_4min WL reps: 49
+    thoracic_4min SWIR reps: 49
+
+    bile_10min WL reps: 113
+    bile_10min SWIR reps: 112

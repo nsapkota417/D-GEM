@@ -1,0 +1,85 @@
+data:
+  code_to_class:
+    0: 0
+    5: 12
+    11: 1
+    12: 4
+    13: 3
+    21: 2
+    22: 10
+    23: 6
+    24: 7
+    25: 8
+    31: 5
+    32: 9
+    33: 11
+    50: 0
+    255: 255
+  ignore_index: 255
+  mask_col: watershed_mask
+  name: CholecSeg8k
+  num_ch: 3
+  num_class: 13
+  root: /users/nsapkota/VOS/data/datasets/cholecseg8k
+  test: /users/nsapkota/VOS/data/meta/cholecseg8k_meta_test.csv
+  test_csv: /users/nsapkota/VOS/data/meta/cholecseg8k_meta_test.csv
+  train: /users/nsapkota/VOS/data/meta/cholecseg8k_meta_train.csv
+  train_csv: /users/nsapkota/VOS/data/meta/cholecseg8k_meta_train.csv
+experiment:
+  debug: false
+  name: ssvss_0215
+  notes: AM w mul. Anc; val on all frames; CE & 0.5*Dice Loss
+  seed: 99
+name: CholecSeg8k
+train:
+  K: 8
+  alpha_am: 0.15
+  alpha_tm: 0.15
+  am_attn_beta: 2.0
+  am_keep_k: 256
+  am_max_items: 8
+  am_red_lambda: 0.5
+  amp: false
+  attn_sharp: 80
+  attn_topk_am: 256
+  attn_topk_tm: 128
+  bs: 1
+  crop_size:
+  - 256
+  - 256
+  cs:
+  - 256
+  - 256
+  dice_inc_bg: false
+  dice_weight: 0.2
+  epochs: 30
+  ft_encoder: false
+  gate_conf_thr: 0.6
+  gate_ent_thr: 1.2
+  gate_mode: 'off'
+  jitter: 0
+  learnable_alpha: true
+  lr_dec: 0.0002
+  lr_enc: 0.0001
+  max_dt: 64
+  model: dv3_vitsp
+  model_path: ''
+  num_workers: 4
+  pt_encoder: true
+  read_topk_mem_tokens: 0
+  t_query: 10
+  tm_warmup: 1
+  unfreeze_epoch: 1
+  use_am: false
+  use_mem_attention: true
+  use_memory: false
+  use_tm: false
+  wd: 0.0001
+  write_topk_patch_tokens: 128
+val:
+  val_every: 3
+  val_t_query: -1
+  wandb_vis: false
+  wandb_vis_every: 50
+  wandb_vis_frames: 3
+  wandb_vis_max: 2
