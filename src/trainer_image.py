@@ -89,6 +89,25 @@ class Trainer:
             x = x[:, 0]
         return x.long()
 
+    def _validate_targets(self, targets: torch.Tensor, mask_paths=None) -> None:
+        """Fail clearly on CPU before CUDA cross-entropy sees invalid labels."""
+        invalid = (targets != self.ignore_index) & (
+            (targets < 0) | (targets >= self.num_classes)
+        )
+        if not torch.any(invalid):
+            return
+
+        invalid_ids = torch.unique(targets[invalid]).tolist()
+        detail = ""
+        if mask_paths is not None:
+            paths = [str(path) for path in mask_paths]
+            detail = f" Mask files in this batch: {paths}."
+        raise ValueError(
+            f"Invalid mapped mask IDs {invalid_ids}; expected class IDs 0 to "
+            f"{self.num_classes - 1} or ignore_index={self.ignore_index}."
+            f" Check data.code_to_class.{detail}"
+        )
+
     def _forward_logits(self, image):
         """
         Accept either:
@@ -136,13 +155,14 @@ class Trainer:
                 print(f"AMP Training {'Enabled' if use_amp else 'Not Enabled'}...")
 
         for idx, batch_data in enumerate(train_loader):
+            mask_cpu = self._as_hw_labels(batch_data["mask"])
+            self._validate_targets(mask_cpu, batch_data.get("mask_path"))
             image = batch_data["image"].to(
                 self.device, dtype=torch.float, non_blocking=True
             )
-            mask = batch_data["mask"].to(
+            mask = mask_cpu.to(
                 self.device, non_blocking=True
             )
-            mask = self._as_hw_labels(mask)
 
             self.optimizer.zero_grad(set_to_none=True)
 
@@ -218,11 +238,12 @@ class Trainer:
                 dtype=torch.float,
                 non_blocking=True,
             )
-            mask = batch_data["mask"].to(
+            mask_cpu = self._as_hw_labels(batch_data["mask"])
+            self._validate_targets(mask_cpu, batch_data.get("mask_path"))
+            mask = mask_cpu.to(
                 self.device,
                 non_blocking=True,
             )
-            mask = self._as_hw_labels(mask)
 
             # Dataset must return video_src for every frame.
             if "video_src" not in batch_data:
