@@ -15,7 +15,10 @@ class ImageSegDataset(Dataset):
 
         self.img_col = str(self.cfg.data.img_col)
         self.mask_col = str(self.cfg.data.mask_col)
-        self.modality = self.cfg.data.modality
+        # The public RGB workflow uses the normal `img`/`mask` columns.
+        # Multispectral modality names are retained only for backwards
+        # compatibility and must be explicitly configured.
+        self.modality = getattr(self.cfg.data, "modality", "")
 
         if self.modality:
             if self.modality == "swir_img":

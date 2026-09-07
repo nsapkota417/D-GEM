@@ -12,6 +12,7 @@ data:
   test: data/sample_dataset/sample_video.csv   # Validation or test CSV manifest.
   img_col: img                    # CSV column containing image paths.
   mask_col: mask                  # CSV column containing mask paths; `-` means unlabeled.
+  modality: ''                    # Leave blank for standard RGB `img`/`mask` CSVs.
   ignore_index: 255               # Mask value excluded from loss and metrics.
   code_to_class:                  # Raw grayscale-mask value -> training class ID.
     0: 0                          # Background example.
