@@ -360,7 +360,9 @@ if not cfg.val.eval_only:
         img_col=cfg.data.img_col,
     )
 
-    if cfg.data.use_half:
+    # Legacy optional sampling switch.  Public configs omit it, which means
+    # use the full training manifest by default.
+    if getattr(cfg.data, "use_half", False):
         train_df = (
             pd.concat([
                 train_df.iloc[::2],                  # keep every other row
