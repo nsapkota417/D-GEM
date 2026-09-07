@@ -362,7 +362,7 @@ if not cfg.val.eval_only:
 
     # Legacy optional sampling switch.  Public configs omit it, which means
     # use the full training manifest by default.
-    if getattr(cfg.data, "use_half", False):
+    if getattr(cfg.data, "use_half", False) and "rep" in train_df:
         train_df = (
             pd.concat([
                 train_df.iloc[::2],                  # keep every other row
@@ -372,11 +372,13 @@ if not cfg.val.eval_only:
             .reset_index(drop=True)
         )
 
-    if cfg.data.train_vids:
-        train_df = train_df[train_df['video_src'].isin(cfg.data.train_vids)].copy()
-    if cfg.data.include_indices:
-        train_df = select_by_frame_ranges(train_df, "frame_id", ranges=cfg.data.include_indices)
-    if cfg.data.use_rep_only:
+    train_vids = getattr(cfg.data, "train_vids", [])
+    include_indices = getattr(cfg.data, "include_indices", [])
+    if train_vids:
+        train_df = train_df[train_df['video_src'].isin(train_vids)].copy()
+    if include_indices and "frame_id" in train_df:
+        train_df = select_by_frame_ranges(train_df, "frame_id", ranges=include_indices)
+    if getattr(cfg.data, "use_rep_only", False) and "rep" in train_df:
         train_df = train_df.loc[train_df["rep"] == "rep"]
     train_df = train_df.loc[train_df[cfg.data.mask_col] != '-']
     
@@ -384,11 +386,13 @@ if not cfg.val.eval_only:
 
     # load safely, exclude pre-defined bad frames, select only represented frames
     test_df = normalize_df(pd.read_csv(cfg.data.test), img_col=cfg.data.img_col)
-    if cfg.data.test_vids:
-        test_df = test_df[test_df['video_src'].isin(cfg.data.test_vids)].copy()
-    if cfg.data.include_indices:
-        test_df = select_by_frame_ranges(test_df, "frame_id", ranges=cfg.data.include_indices)
-    test_df = test_df.loc[test_df["rep"] == "rep"].copy()
+    test_vids = getattr(cfg.data, "test_vids", [])
+    if test_vids:
+        test_df = test_df[test_df['video_src'].isin(test_vids)].copy()
+    if include_indices and "frame_id" in test_df:
+        test_df = select_by_frame_ranges(test_df, "frame_id", ranges=include_indices)
+    if getattr(cfg.data, "use_rep_only", False) and "rep" in test_df:
+        test_df = test_df.loc[test_df["rep"] == "rep"].copy()
     test_df = test_df.loc[test_df[cfg.data.mask_col] != '-']
 
     # if cfg.train.sample_in_video:
@@ -705,12 +709,13 @@ if cfg.val.eval_only:
     )
 
     inf_df = normalize_df(pd.read_csv(cfg.data.test), img_col=cfg.data.img_col)
-    if cfg.data.test_vids:
-        inf_df = inf_df[inf_df['video_src'].isin(cfg.data.test_vids)].copy()
+    test_vids = getattr(cfg.data, "test_vids", [])
+    if test_vids:
+        inf_df = inf_df[inf_df['video_src'].isin(test_vids)].copy()
     # if cfg.data.include_indices:
     #     inf_df = select_by_frame_ranges(test_df, "frame_id", ranges=cfg.data.include_indices)
 
-    if cfg.data.use_rep_only:
+    if getattr(cfg.data, "use_rep_only", False) and "rep" in inf_df:
         inf_df = inf_df.loc[inf_df["rep"] == "rep"].copy()
 
     # inf_df = inf_df.loc[test_df[cfg.data.mask_col] != '-']
