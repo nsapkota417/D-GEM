@@ -39,7 +39,8 @@ class ImageSegDataset(Dataset):
             self.img_cols = [self.cfg.data.img_col]
             self.mask_col = self.cfg.data.mask_col
 
-        self.ignore_index = int(self.cfg.data.ignore_index)
+        ignore_index = getattr(self.cfg.data, "ignore_index", 255)
+        self.ignore_index = 255 if ignore_index is None else int(ignore_index)
 
         required = set(self.img_cols + [self.mask_col])
         missing = required - set(self.df.columns)
@@ -78,7 +79,6 @@ class ImageSegDataset(Dataset):
         self.lut = np.full(256, self.ignore_index, dtype=np.uint8)
         for k in range(self.cfg.data.num_class):
             self.lut[k] = np.uint8(k)
-        self.lut[self.ignore_index] = np.uint8(self.ignore_index)
 
         # Optional RGB label mapping
         self.rgb_to_id = None

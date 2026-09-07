@@ -13,11 +13,10 @@ data:
   img_col: img                    # CSV column containing image paths.
   mask_col: mask                  # CSV column containing mask paths; `-` means unlabeled.
   modality: ''                    # Leave blank for standard RGB `img`/`mask` CSVs.
-  ignore_index: 255               # Mask value excluded from loss and metrics.
+  ignore_index: 255               # Internal ID for padding/unlabeled pixels after class mapping.
   code_to_class:                  # Raw grayscale-mask value -> training class ID.
     0: 0                          # Background example.
-    1: 1                          # Foreground example; replace for your label scheme.
-    255: 255                      # Preserve ignored pixels.
+    255: 1                        # Foreground example for common binary 0/255 masks.
   label_json: ''                  # Optional palette JSON for datasets that require one.
 
 experiment:

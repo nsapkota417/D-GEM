@@ -143,6 +143,11 @@ def main() -> None:
     if not isinstance(data, dict):
         raise ValueError("Config must contain a top-level 'data' mapping.")
 
+    # 255 is the internal sentinel for padded or otherwise ignored pixels.
+    # A raw mask value of 255 may still map to a valid class via code_to_class.
+    if data.get("ignore_index") is None:
+        data["ignore_index"] = 255
+
     if args.task_type:
         data["task_type"] = args.task_type
     if args.data_csv:
