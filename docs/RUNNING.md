@@ -292,6 +292,38 @@ With `--save-preds`, label-map PNGs are also written below:
 
 ## 8. Useful command-line overrides
 
+### U-KAN image baseline
+
+U-KAN is available as an image-only baseline. It uses the same CSV manifests,
+augmentation policy, Dice+cross-entropy loss, optimizer settings, checkpoints,
+and inference metrics as the D-GEM image workflow; only the segmentation model
+changes. Select it with the dedicated model profile:
+
+```bash
+python src/train.py \
+  --config /path/to/experiment.yaml \
+  --model-config cfg/model/ukan.yaml \
+  --task-type image \
+  --train-csv /path/to/train.csv \
+  --test-csv /path/to/test.csv
+```
+
+Run inference with the same model profile:
+
+```bash
+python src/infer.py \
+  --config /path/to/experiment.yaml \
+  --model-config cfg/model/ukan.yaml \
+  --task-type image \
+  --test-csv /path/to/test.csv \
+  --weights /path/to/ukan_checkpoint.pth \
+  --output-dir outputs/ukan_inference \
+  --save-preds
+```
+
+U-KAN is not a video-memory model, so it is intentionally unavailable for
+`task_type: video` propagation.
+
 `src/train.py` overrides base-config values with:
 
 ```text

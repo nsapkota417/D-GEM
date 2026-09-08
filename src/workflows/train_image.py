@@ -14,6 +14,7 @@ from pathlib import Path
 
 from networks.dinov3_seg import DINOv3ViTSeg
 from networks.svsswrapper import SVSSWrapper
+from networks.ukan import UKAN
 
 from utils import nested_dotdict, run_training, banner, build_optimizer, DiceCELoss
 from trainer_image import Trainer, inference_with_miou
@@ -85,10 +86,10 @@ if cfg.experiment.debug:
     cfg.val.wandb_vis = False
 
 
-if not str(cfg.train.model).startswith("dv3_"):
+if not (str(cfg.train.model).startswith("dv3_") or str(cfg.train.model) == "ukan"):
     raise ValueError(
-        "This public release supports DINOv3/D-GEM models only. "
-        "Set train.model to dv3_vits16plus, dv3_vitb16, or dv3_vitl16."
+        "Image training supports ukan or DINOv3 model names (dv3_vits16plus, "
+        "dv3_vitb16, dv3_vitl16)."
     )
 
 if cfg.val.eval_only:
@@ -531,6 +532,16 @@ if "sam2" in cfg.train.model:
         reprompt_cc_min_area=getattr(cfg.train, "sam2_reprompt_cc_min_area", 50),
         reprompt_prob_thresh=getattr(cfg.train, "sam2_reprompt_prob_thresh", 0.35),
     )
+
+elif str(cfg.train.model) == "ukan":
+    if not is_image_task:
+        raise ValueError("U-KAN is an image-only baseline; set data.task_type: image.")
+    model = UKAN(
+        num_classes=int(cfg.data.num_class),
+        in_channels=int(cfg.data.num_ch),
+        embed_dims=tuple(getattr(cfg.train, "ukan_embed_dims", [256, 320, 512])),
+        drop_rate=float(getattr(cfg.train, "ukan_drop_rate", 0.0)),
+    ).to(device)
 
 else:
     backbone = DINOv3ViTSeg(

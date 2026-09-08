@@ -1,0 +1,9 @@
+# U-KAN image-only baseline. Use this with --model-config cfg/model/ukan.yaml.
+# The data loader, augmentation, loss, optimizer, trainer, and evaluation code
+# remain unchanged from the D-GEM image workflow.
+train:
+  model: ukan                    # Select the U-KAN architecture.
+  pt_encoder: false              # U-KAN has no external pretrained DINO encoder.
+  ft_encoder: false              # Kept false because U-KAN is trained end-to-end.
+  ukan_embed_dims: [256, 320, 512] # Official U-KAN stage widths.
+  ukan_drop_rate: 0.0            # Dropout within KAN token blocks.

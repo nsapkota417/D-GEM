@@ -21,6 +21,7 @@ from PIL import Image
 
 from networks.dinov3_seg import DINOv3ViTSeg
 from networks.svsswrapper import SVSSWrapper
+from networks.ukan import UKAN
 from utils import nested_dotdict
 
 
@@ -139,8 +140,17 @@ def to_tensor(image: np.ndarray, device: torch.device) -> torch.Tensor:
 
 def build_model(cfg, device: torch.device):
     model_name = str(cfg.train.model)
+    if model_name == "ukan":
+        if str(cfg.data.task_type).lower() != "image":
+            raise ValueError("U-KAN inference supports image mode only.")
+        return UKAN(
+            num_classes=int(cfg.data.num_class),
+            in_channels=int(getattr(cfg.data, "num_ch", 3)),
+            embed_dims=tuple(getattr(cfg.train, "ukan_embed_dims", [256, 320, 512])),
+            drop_rate=float(getattr(cfg.train, "ukan_drop_rate", 0.0)),
+        ).to(device)
     if "dv3" not in model_name:
-        raise ValueError("Standalone inference currently supports DINOv3/D-GEM checkpoints only.")
+        raise ValueError("Standalone inference supports U-KAN or DINOv3/D-GEM checkpoints only.")
     backbone = DINOv3ViTSeg(
         model_name=f"facebook/dinov3-{model_name.split('_')[-1]}-pretrain-lvd1689m",
         num_classes=int(cfg.data.num_class), pt_encoder=bool(cfg.train.pt_encoder),
