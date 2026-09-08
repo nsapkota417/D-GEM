@@ -278,9 +278,11 @@ Every inference run writes:
 ```
 
 `report.csv` contains one row per processed test frame, the optional prediction
-path, and an `miou` value when that frame has a ground-truth mask. `summary.json`
-records processed-frame count, evaluated-frame count, mean frame mIoU, and
-whether PNG predictions were requested.
+path, and these values when that frame has a ground-truth mask: `fg_iou`
+(foreground-only IoU), `macro_iou` (background and foreground classes weighted
+equally), and `fw_iou` (classes weighted by their ground-truth pixel frequency).
+`miou` remains as a compatibility alias for `macro_iou`. `summary.json` records
+both mean-per-frame and global-pixel aggregates of all three metrics.
 
 With `--save-preds`, label-map PNGs are also written below:
 

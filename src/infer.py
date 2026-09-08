@@ -197,17 +197,54 @@ def load_weights(model, path: str, device: torch.device) -> None:
         print(f"Checkpoint compatibility: {len(incompatible.missing_keys)} missing, {len(incompatible.unexpected_keys)} unexpected keys")
 
 
-def miou(pred: np.ndarray, target: np.ndarray, classes: int, ignore_index: int) -> float | None:
+def confusion_matrix(pred: np.ndarray, target: np.ndarray, classes: int, ignore_index: int) -> np.ndarray | None:
     valid = target != ignore_index
     if not valid.any():
         return None
-    scores = []
-    for class_id in range(classes):
-        predicted, actual = pred[valid] == class_id, target[valid] == class_id
-        union = np.logical_or(predicted, actual).sum()
-        if union:
-            scores.append(np.logical_and(predicted, actual).sum() / union)
-    return float(np.mean(scores) * 100) if scores else None
+    matrix = np.zeros((classes, classes), dtype=np.int64)
+    np.add.at(matrix, (target[valid].astype(int), pred[valid].astype(int)), 1)
+    return matrix
+
+
+def metrics_from_confusion(matrix: np.ndarray | None) -> dict[str, float | None]:
+    """IoU metrics expressed as percentages from a target-by-prediction matrix."""
+    empty = {"miou": None, "macro_iou": None, "fg_iou": None, "fw_iou": None}
+    if matrix is None or not matrix.any():
+        return empty
+
+    target_pixels = matrix.sum(axis=1)
+    predicted_pixels = matrix.sum(axis=0)
+    intersection = np.diag(matrix).astype(float)
+    union = target_pixels + predicted_pixels - intersection
+    class_iou = np.divide(
+        intersection,
+        union,
+        out=np.full(len(union), np.nan, dtype=float),
+        where=union > 0,
+    )
+    macro_iou = float(np.nanmean(class_iou) * 100)
+    foreground = class_iou[1:]
+    foreground_iou = float(np.nanmean(foreground) * 100) if np.isfinite(foreground).any() else None
+    weights = target_pixels / target_pixels.sum()
+    frequency_weighted_iou = float(np.nansum(weights * class_iou) * 100)
+    return {
+        "miou": macro_iou,  # Backwards-compatible name used by earlier reports.
+        "macro_iou": macro_iou,
+        "fg_iou": foreground_iou,
+        "fw_iou": frequency_weighted_iou,
+    }
+
+
+def evaluate_prediction(prediction, row, cfg, lut) -> tuple[dict[str, float | None], np.ndarray | None]:
+    if not has_mask(row[cfg.data.mask_col]):
+        return metrics_from_confusion(None), None
+    matrix = confusion_matrix(
+        prediction,
+        read_mask(row[cfg.data.mask_col], cfg, lut),
+        int(cfg.data.num_class),
+        int(cfg.data.ignore_index),
+    )
+    return metrics_from_confusion(matrix), matrix
 
 
 def save_prediction(prediction: np.ndarray, row: pd.Series, output_dir: Path) -> str:
@@ -221,20 +258,24 @@ def save_prediction(prediction: np.ndarray, row: pd.Series, output_dir: Path) ->
 
 def run_image(model, test_df, cfg, lut, device, output_dir, save_preds):
     rows = []
+    total_confusion = np.zeros((int(cfg.data.num_class), int(cfg.data.num_class)), dtype=np.int64)
     for _, row in test_df.iterrows():
         image = to_tensor(read_image(row.img, cfg), device)
         with torch.inference_mode():
             logits = model(image)
             logits = logits[0] if isinstance(logits, (tuple, list)) else logits
         prediction = logits.argmax(1).squeeze(0).cpu().numpy()
-        score = miou(prediction, read_mask(row[cfg.data.mask_col], cfg, lut), cfg.data.num_class, cfg.data.ignore_index) if has_mask(row[cfg.data.mask_col]) else None
-        rows.append({"img": row.img, "video_src": row.video_src, "pred_path": save_prediction(prediction, row, output_dir) if save_preds else None, "miou": score})
-    return rows
+        metrics, matrix = evaluate_prediction(prediction, row, cfg, lut)
+        if matrix is not None:
+            total_confusion += matrix
+        rows.append({"img": row.img, "video_src": row.video_src, "pred_path": save_prediction(prediction, row, output_dir) if save_preds else None, **metrics})
+    return rows, total_confusion
 
 
 def run_video(model, support_df, test_df, cfg, lut, device, output_dir, save_preds):
     groups = {key: group for key, group in support_df.groupby(["video_src", "video_clip"], sort=False)}
     rows = []
+    total_confusion = np.zeros((int(cfg.data.num_class), int(cfg.data.num_class)), dtype=np.int64)
     for key, frames in test_df.groupby(["video_src", "video_clip"], sort=False):
         supports = groups.get(key)
         if supports is None:
@@ -251,11 +292,13 @@ def run_video(model, support_df, test_df, cfg, lut, device, output_dir, save_pre
             with torch.inference_mode():
                 logits, _, state = model.step(query_img=to_tensor(read_image(row.img, cfg), device), state=state, query_index=torch.tensor([index], device=device))
             prediction = logits.argmax(1).squeeze(0).cpu().numpy()
-            score = miou(prediction, read_mask(row[cfg.data.mask_col], cfg, lut), cfg.data.num_class, cfg.data.ignore_index) if has_mask(row[cfg.data.mask_col]) else None
-            rows.append({"img": row.img, "video_src": row.video_src, "video_clip": row.video_clip, "pred_path": save_prediction(prediction, row, output_dir) if save_preds else None, "miou": score})
+            metrics, matrix = evaluate_prediction(prediction, row, cfg, lut)
+            if matrix is not None:
+                total_confusion += matrix
+            rows.append({"img": row.img, "video_src": row.video_src, "video_clip": row.video_clip, "pred_path": save_prediction(prediction, row, output_dir) if save_preds else None, **metrics})
         if hasattr(model, "clear_video"):
             model.clear_video(f"infer_{key[0]}_{key[1]}")
-    return rows
+    return rows, total_confusion
 
 
 def main() -> None:
@@ -273,11 +316,24 @@ def main() -> None:
     load_weights(model, args.weights, device)
     model.eval()
     lut = build_lut(cfg)
-    rows = run_video(model, support_df, test_df, cfg, lut, device, output_dir, args.save_preds) if task_type == "video" else run_image(model, test_df, cfg, lut, device, output_dir, args.save_preds)
+    rows, total_confusion = run_video(model, support_df, test_df, cfg, lut, device, output_dir, args.save_preds) if task_type == "video" else run_image(model, test_df, cfg, lut, device, output_dir, args.save_preds)
     report = pd.DataFrame(rows)
     report.to_csv(output_dir / "report.csv", index=False)
     scores = report.miou.dropna()
-    summary = {"task_type": task_type, "processed_frames": len(report), "evaluated_frames": len(scores), "mean_frame_miou": float(scores.mean()) if len(scores) else None, "predictions_saved": bool(args.save_preds)}
+    global_metrics = metrics_from_confusion(total_confusion)
+    summary = {
+        "task_type": task_type,
+        "processed_frames": len(report),
+        "evaluated_frames": len(scores),
+        "mean_frame_miou": float(scores.mean()) if len(scores) else None,
+        "mean_frame_fg_iou": float(report.fg_iou.dropna().mean()) if report.fg_iou.notna().any() else None,
+        "mean_frame_macro_iou": float(report.macro_iou.dropna().mean()) if report.macro_iou.notna().any() else None,
+        "mean_frame_fw_iou": float(report.fw_iou.dropna().mean()) if report.fw_iou.notna().any() else None,
+        "global_fg_iou": global_metrics["fg_iou"],
+        "global_macro_iou": global_metrics["macro_iou"],
+        "global_fw_iou": global_metrics["fw_iou"],
+        "predictions_saved": bool(args.save_preds),
+    }
     (output_dir / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
     print(json.dumps(summary, indent=2))
 
