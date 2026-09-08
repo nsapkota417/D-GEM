@@ -1,0 +1,6 @@
+# Larger MONAI image baseline: FlexibleUNet + ImageNet-pretrained EfficientNet-B4.
+# This keeps the same image data, augmentation, loss, trainer, and metrics as
+# the B2 profile, while increasing model capacity to roughly 25M parameters.
+train:
+  model: monai_flexibleunet_efficientnet_b4  # Larger EfficientNet-B4 encoder.
+  monai_pretrained: true                     # ImageNet encoder initialization for training.

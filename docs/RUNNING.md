@@ -346,6 +346,8 @@ EfficientNet-B2 encoder. It is image-only and retains the shared data,
 augmentation, loss, training, evaluation, and inference pipeline.
 Its wrapper pads inputs internally to a multiple of 32 and crops logits back
 to the configured resolution, so the shared `720 x 720` setting is supported.
+For a larger approximately 25M-parameter variant, replace its model profile
+with `cfg/model/monai_flexibleunet_efficientnet_b4.yaml`.
 
 ```bash
 python src/train.py \
