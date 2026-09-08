@@ -284,10 +284,14 @@ equally), and `fw_iou` (classes weighted by their ground-truth pixel frequency).
 `miou` remains as a compatibility alias for `macro_iou`. `summary.json` records
 both mean-per-frame and global-pixel aggregates of all three metrics.
 
-With `--save-preds`, label-map PNGs are also written below:
+With `--save-preds`, both raw class-ID label maps and RGB visualization PNGs
+are written below. Binary raw masks contain `0` (background) and `1`
+(foreground); the default RGB visualization is black/red. Define `label_json`
+to use your dataset's class colors instead.
 
 ```text
 <output-dir>/predictions/<video_src>/<video_clip>/<frame-name>.png
+<output-dir>/predictions_color/<video_src>/<video_clip>/<frame-name>.png
 ```
 
 ## 8. Useful command-line overrides

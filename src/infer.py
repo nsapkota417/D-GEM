@@ -105,6 +105,26 @@ def build_lut(cfg) -> np.ndarray:
     return lut
 
 
+def build_palette(cfg) -> np.ndarray:
+    """Return an RGB palette, optionally using the configured label JSON file."""
+    default_colors = np.array(
+        [[0, 0, 0], [220, 20, 60], [0, 114, 178], [0, 158, 115],
+         [230, 159, 0], [86, 180, 233], [204, 121, 167], [240, 228, 66]],
+        dtype=np.uint8,
+    )
+    classes = int(cfg.data.num_class)
+    palette = np.vstack([default_colors[i % len(default_colors)] for i in range(classes)])
+    label_json = getattr(cfg.data, "label_json", "")
+    if not label_json:
+        return palette
+    with Path(label_json).expanduser().open(encoding="utf-8") as handle:
+        for item in json.load(handle):
+            class_id = int(item["classid"])
+            if 0 <= class_id < classes:
+                palette[class_id] = np.asarray(item["color"], dtype=np.uint8)
+    return palette
+
+
 def read_image(path: str, cfg) -> np.ndarray:
     image = cv2.imread(str(path), cv2.IMREAD_COLOR)
     if image is None:
@@ -278,7 +298,19 @@ def save_prediction(prediction: np.ndarray, row: pd.Series, output_dir: Path) ->
     return str(path)
 
 
-def run_image(model, test_df, cfg, lut, device, output_dir, save_preds):
+def save_color_prediction(prediction: np.ndarray, row: pd.Series, output_dir: Path, palette: np.ndarray) -> str:
+    video = str(row.get("video_src", "images")).replace("/", "_")
+    clip = str(row.get("video_clip", "")).replace("/", "_")
+    path = output_dir / "predictions_color" / video / clip / f"{Path(row.img).stem}.png"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    colors = np.zeros((*prediction.shape, 3), dtype=np.uint8)
+    valid = (prediction >= 0) & (prediction < len(palette))
+    colors[valid] = palette[prediction[valid].astype(int)]
+    Image.fromarray(colors, mode="RGB").save(path)
+    return str(path)
+
+
+def run_image(model, test_df, cfg, lut, palette, device, output_dir, save_preds):
     rows = []
     total_confusion = np.zeros((int(cfg.data.num_class), int(cfg.data.num_class)), dtype=np.int64)
     for _, row in test_df.iterrows():
@@ -290,11 +322,13 @@ def run_image(model, test_df, cfg, lut, device, output_dir, save_preds):
         metrics, matrix = evaluate_prediction(prediction, row, cfg, lut)
         if matrix is not None:
             total_confusion += matrix
-        rows.append({"img": row.img, "video_src": row.video_src, "pred_path": save_prediction(prediction, row, output_dir) if save_preds else None, **metrics})
+        raw_path = save_prediction(prediction, row, output_dir) if save_preds else None
+        rows.append({"img": row.img, "video_src": row.video_src, "pred_path": raw_path,
+                     "color_pred_path": save_color_prediction(prediction, row, output_dir, palette) if save_preds else None, **metrics})
     return rows, total_confusion
 
 
-def run_video(model, support_df, test_df, cfg, lut, device, output_dir, save_preds):
+def run_video(model, support_df, test_df, cfg, lut, palette, device, output_dir, save_preds):
     groups = {key: group for key, group in support_df.groupby(["video_src", "video_clip"], sort=False)}
     rows = []
     total_confusion = np.zeros((int(cfg.data.num_class), int(cfg.data.num_class)), dtype=np.int64)
@@ -317,7 +351,11 @@ def run_video(model, support_df, test_df, cfg, lut, device, output_dir, save_pre
             metrics, matrix = evaluate_prediction(prediction, row, cfg, lut)
             if matrix is not None:
                 total_confusion += matrix
-            rows.append({"img": row.img, "video_src": row.video_src, "video_clip": row.video_clip, "pred_path": save_prediction(prediction, row, output_dir) if save_preds else None, **metrics})
+            raw_path = save_prediction(prediction, row, output_dir) if save_preds else None
+            rows.append({"img": row.img, "video_src": row.video_src, "video_clip": row.video_clip,
+                         "pred_path": raw_path,
+                         "color_pred_path": save_color_prediction(prediction, row, output_dir, palette) if save_preds else None,
+                         **metrics})
         if hasattr(model, "clear_video"):
             model.clear_video(f"infer_{key[0]}_{key[1]}")
     return rows, total_confusion
@@ -338,7 +376,8 @@ def main() -> None:
     load_weights(model, args.weights, device)
     model.eval()
     lut = build_lut(cfg)
-    rows, total_confusion = run_video(model, support_df, test_df, cfg, lut, device, output_dir, args.save_preds) if task_type == "video" else run_image(model, test_df, cfg, lut, device, output_dir, args.save_preds)
+    palette = build_palette(cfg)
+    rows, total_confusion = run_video(model, support_df, test_df, cfg, lut, palette, device, output_dir, args.save_preds) if task_type == "video" else run_image(model, test_df, cfg, lut, palette, device, output_dir, args.save_preds)
     report = pd.DataFrame(rows)
     report.to_csv(output_dir / "report.csv", index=False)
     scores = report.miou.dropna()
