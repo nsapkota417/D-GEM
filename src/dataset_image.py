@@ -109,6 +109,23 @@ class ImageSegDataset(Dataset):
     def __len__(self):
         return len(self.df)
 
+    def augmentation_summary(self) -> list[str]:
+        """Human-readable preprocessing summary for the training log."""
+        if not self.is_train:
+            return [
+                "Validation: deterministic aspect-ratio-preserving resize and "
+                f"center padding to {self.target_h}x{self.target_w}; no random augmentation."
+            ]
+        return [
+            f"Horizontal flip: p={self.hflip_prob:g}",
+            f"90/180/270 degree rotation: p={self.rot90_prob:g}",
+            f"Scale: uniform [{self.scale_min:g}, {self.scale_max:g}]",
+            f"Aspect ratio: log-uniform [{self.aspect_min:g}, {self.aspect_max:g}]",
+            f"Random crop/padding to {self.target_h}x{self.target_w}",
+            f"Photometric jitter: p={self.photo_prob:g} "
+            "(brightness, contrast, gamma, RGB hue/saturation; optional blur/noise)",
+        ]
+
     def __getitem__(self, idx):
         row = self.df.iloc[idx]
 

@@ -458,6 +458,13 @@ if not cfg.val.eval_only:
             is_train=False,
         )
 
+        with banner(top=False, bottom=False):
+            print("Image preprocessing and augmentation")
+            for item in train_ds.augmentation_summary():
+                print(f"  - {item}")
+            for item in val_ds.augmentation_summary():
+                print(f"  - {item}")
+
         train_loader = DataLoader(
             train_ds,
             batch_size=batch_size,
