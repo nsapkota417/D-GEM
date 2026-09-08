@@ -1,0 +1,7 @@
+# ImageNet-pretrained ResNet-50 U-Net image baseline.
+# Use with --model-config cfg/model/resunet50_imagenet.yaml. The shared image
+# dataset, augmentations, loss, trainer, metrics, and inference code are unchanged.
+train:
+  model: smp_unet_resnet50        # Standard U-Net decoder with a ResNet-50 encoder.
+  encoder_weights: imagenet       # Download/use ImageNet encoder weights on first run.
+  decoder_attention_type: null    # Set `scse` only for the optional attention U-Net variant.

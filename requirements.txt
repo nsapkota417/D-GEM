@@ -1,6 +1,7 @@
 # Install PyTorch separately using the command for your CUDA/CPU platform from
 # https://pytorch.org/get-started/locally/, then install this file.
 transformers>=4.50
+segmentation-models-pytorch>=0.4  # U-Net baselines with ImageNet-pretrained encoders.
 numpy>=1.24
 pandas>=2.0
 opencv-python>=4.8

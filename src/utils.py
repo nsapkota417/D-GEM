@@ -270,7 +270,7 @@ def build_optimizer(cfg, model):
         if not param.requires_grad:
             continue
 
-        if name.startswith("encoder."):
+        if name.startswith("encoder.") or ".encoder." in name:
             enc_params.append(param)
         else:
             other_params.append(param)

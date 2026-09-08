@@ -324,6 +324,26 @@ python src/infer.py \
 U-KAN is not a video-memory model, so it is intentionally unavailable for
 `task_type: video` propagation.
 
+### ImageNet-pretrained ResNet U-Net baseline
+
+The `resunet50_imagenet.yaml` profile selects a standard U-Net with a
+ResNet-50 ImageNet-pretrained encoder. It uses the same image pipeline as
+D-GEM, while applying the required ImageNet mean/std normalization inside the
+model after augmentation. Install the optional dependency once:
+
+```bash
+pip install -r requirements.txt
+```
+
+```bash
+python src/train.py \
+  --config /path/to/experiment.yaml \
+  --model-config cfg/model/resunet50_imagenet.yaml \
+  --task-type image \
+  --train-csv /path/to/train.csv \
+  --test-csv /path/to/test.csv
+```
+
 `src/train.py` overrides base-config values with:
 
 ```text

@@ -22,6 +22,7 @@ from PIL import Image
 from networks.dinov3_seg import DINOv3ViTSeg
 from networks.svsswrapper import SVSSWrapper
 from networks.ukan import UKAN
+from networks.smp_unet import SMPUnet
 from utils import nested_dotdict
 
 
@@ -140,6 +141,17 @@ def to_tensor(image: np.ndarray, device: torch.device) -> torch.Tensor:
 
 def build_model(cfg, device: torch.device):
     model_name = str(cfg.train.model)
+    if model_name.startswith("smp_unet_"):
+        if str(cfg.data.task_type).lower() != "image":
+            raise ValueError("SMP U-Net inference supports image mode only.")
+        return SMPUnet(
+            encoder_name=model_name.removeprefix("smp_unet_"),
+            num_classes=int(cfg.data.num_class),
+            # A checkpoint supplies all weights; do not download ImageNet weights at inference.
+            encoder_weights=None,
+            in_channels=int(getattr(cfg.data, "num_ch", 3)),
+            decoder_attention_type=getattr(cfg.train, "decoder_attention_type", None),
+        ).to(device)
     if model_name == "ukan":
         if str(cfg.data.task_type).lower() != "image":
             raise ValueError("U-KAN inference supports image mode only.")

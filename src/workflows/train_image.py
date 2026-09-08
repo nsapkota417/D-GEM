@@ -15,6 +15,7 @@ from pathlib import Path
 from networks.dinov3_seg import DINOv3ViTSeg
 from networks.svsswrapper import SVSSWrapper
 from networks.ukan import UKAN
+from networks.smp_unet import SMPUnet
 
 from utils import nested_dotdict, run_training, banner, build_optimizer, DiceCELoss
 from trainer_image import Trainer, inference_with_miou
@@ -86,10 +87,9 @@ if cfg.experiment.debug:
     cfg.val.wandb_vis = False
 
 
-if not (str(cfg.train.model).startswith("dv3_") or str(cfg.train.model) == "ukan"):
+if not (str(cfg.train.model).startswith("dv3_") or str(cfg.train.model) == "ukan" or str(cfg.train.model).startswith("smp_unet_")):
     raise ValueError(
-        "Image training supports ukan or DINOv3 model names (dv3_vits16plus, "
-        "dv3_vitb16, dv3_vitl16)."
+        "Image training supports U-KAN, SMP U-Net, or DINOv3 model names."
     )
 
 if cfg.val.eval_only:
@@ -542,6 +542,20 @@ elif str(cfg.train.model) == "ukan":
         embed_dims=tuple(getattr(cfg.train, "ukan_embed_dims", [256, 320, 512])),
         drop_rate=float(getattr(cfg.train, "ukan_drop_rate", 0.0)),
     ).to(device)
+
+elif str(cfg.train.model).startswith("smp_unet_"):
+    if not is_image_task:
+        raise ValueError("SMP U-Net baselines are image-only; set data.task_type: image.")
+    model = SMPUnet(
+        encoder_name=str(cfg.train.model).removeprefix("smp_unet_"),
+        num_classes=int(cfg.data.num_class),
+        encoder_weights=getattr(cfg.train, "encoder_weights", "imagenet"),
+        in_channels=int(cfg.data.num_ch),
+        decoder_attention_type=getattr(cfg.train, "decoder_attention_type", None),
+    ).to(device)
+    if cfg.train.ft_encoder:
+        for p in model.encoder.parameters():
+            p.requires_grad = False
 
 else:
     backbone = DINOv3ViTSeg(
