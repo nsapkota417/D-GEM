@@ -27,6 +27,12 @@ from utils import nested_dotdict
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Run D-GEM inference from CSV manifests.")
     parser.add_argument("-cfg", "--config", required=True)
+    parser.add_argument(
+        "-m_cfg",
+        "--model-config",
+        default=None,
+        help="Optional D-GEM model YAML; overrides model_config declared in the base config.",
+    )
     parser.add_argument("--task-type", choices=("image", "video"), default=None)
     parser.add_argument("--support-csv", help="Annotated supports for video mode.")
     parser.add_argument("--test-csv", required=True, help="Frames to process.")
@@ -48,9 +54,12 @@ def load_cfg(args: argparse.Namespace):
     config_path = Path(args.config).expanduser()
     with config_path.open(encoding="utf-8") as handle:
         config = yaml.safe_load(handle) or {}
-    model_config = config.pop("model_config", None)
+    declared_model_config = config.pop("model_config", None)
+    model_config = args.model_config or declared_model_config
     if model_config:
-        model_path = config_path.parent / model_config
+        model_path = Path(model_config).expanduser()
+        if not model_path.is_absolute():
+            model_path = (Path.cwd() if args.model_config else config_path.parent) / model_path
         with model_path.open(encoding="utf-8") as handle:
             config = deep_merge(config, yaml.safe_load(handle) or {})
     if args.task_type:
