@@ -344,6 +344,8 @@ pip install -r requirements.txt
 The MONAI profile uses `FlexibleUNet` with an ImageNet-pretrained
 EfficientNet-B2 encoder. It is image-only and retains the shared data,
 augmentation, loss, training, evaluation, and inference pipeline.
+Its wrapper pads inputs internally to a multiple of 32 and crops logits back
+to the configured resolution, so the shared `720 x 720` setting is supported.
 
 ```bash
 python src/train.py \

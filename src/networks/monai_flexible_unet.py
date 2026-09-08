@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 
 class MonaiFlexibleUNet(nn.Module):
@@ -35,4 +36,14 @@ class MonaiFlexibleUNet(nn.Module):
         return self.model.encoder
 
     def forward(self, image: torch.Tensor) -> torch.Tensor:
-        return self.model((image - self.image_mean) / self.image_std)
+        # EfficientNet feature stages downsample by 32.  Older MONAI
+        # FlexibleUNet releases can misalign decoder skips for non-multiples
+        # of 32 (for example the shared 720x720 training resolution). Pad in
+        # raw image space, then crop logits back to the caller's resolution.
+        height, width = image.shape[-2:]
+        padded_height = ((height + 31) // 32) * 32
+        padded_width = ((width + 31) // 32) * 32
+        if (padded_height, padded_width) != (height, width):
+            image = F.pad(image, (0, padded_width - width, 0, padded_height - height))
+        logits = self.model((image - self.image_mean) / self.image_std)
+        return logits[..., :height, :width]
