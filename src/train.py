@@ -50,6 +50,11 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--train-csv", help="CSV manifest for training.")
     parser.add_argument("--test-csv", help="CSV manifest for evaluation.")
+    parser.add_argument(
+        "--no-wandb",
+        action="store_true",
+        help="Disable Weights & Biases logging for this run, overriding experiment.name.",
+    )
     memory_group = parser.add_mutually_exclusive_group()
     memory_group.add_argument(
         "--use-memory", dest="use_memory", action="store_true", help="Enable D-GEM memory."
@@ -120,7 +125,7 @@ def workflow_argv(merged_config: dict[str, Any]) -> tuple[list[str], Path]:
             skip_next = True
         elif argument.startswith(("--model-config=", "--task-type=", "--data-csv=", "--train-csv=", "--test-csv=")):
             continue
-        elif argument in {"--use-memory", "--no-memory"}:
+        elif argument in {"--use-memory", "--no-memory", "--no-wandb"}:
             continue
         else:
             argv.append(argument)
@@ -169,6 +174,8 @@ def main() -> None:
     merged_config = resolve_model_config(config, config_path, args.model_config)
     if args.use_memory is not None:
         merged_config.setdefault("train", {})["use_memory"] = args.use_memory
+    if args.no_wandb:
+        merged_config.setdefault("experiment", {})["name"] = ""
     original_argv = sys.argv
     sys.argv, merged_path = workflow_argv(merged_config)
     try:

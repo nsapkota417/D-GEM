@@ -374,6 +374,9 @@ python src/train.py \
 --no-memory
 ```
 
+Add `--no-wandb` to any training command to disable Weights & Biases logging
+for that run without editing the YAML file.
+
 `src/infer.py` accepts:
 
 ```text
