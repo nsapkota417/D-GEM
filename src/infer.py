@@ -23,6 +23,7 @@ from networks.dinov3_seg import DINOv3ViTSeg
 from networks.svsswrapper import SVSSWrapper
 from networks.ukan import UKAN
 from networks.smp_unet import SMPUnet
+from networks.monai_flexible_unet import MonaiFlexibleUNet
 from utils import nested_dotdict
 
 
@@ -161,6 +162,16 @@ def to_tensor(image: np.ndarray, device: torch.device) -> torch.Tensor:
 
 def build_model(cfg, device: torch.device):
     model_name = str(cfg.train.model)
+    if model_name.startswith("monai_flexibleunet_"):
+        if str(cfg.data.task_type).lower() != "image":
+            raise ValueError("MONAI FlexibleUNet inference supports image mode only.")
+        return MonaiFlexibleUNet(
+            backbone=model_name.removeprefix("monai_flexibleunet_").replace("_", "-"),
+            num_classes=int(cfg.data.num_class),
+            in_channels=int(getattr(cfg.data, "num_ch", 3)),
+            # The checkpoint supplies all weights; do not download ImageNet weights at inference.
+            pretrained=False,
+        ).to(device)
     if model_name.startswith("smp_unet_"):
         if str(cfg.data.task_type).lower() != "image":
             raise ValueError("SMP U-Net inference supports image mode only.")

@@ -339,6 +339,21 @@ model after augmentation. Install the optional dependency once:
 pip install -r requirements.txt
 ```
 
+### MONAI ImageNet-pretrained FlexibleUNet baseline
+
+The MONAI profile uses `FlexibleUNet` with an ImageNet-pretrained
+EfficientNet-B2 encoder. It is image-only and retains the shared data,
+augmentation, loss, training, evaluation, and inference pipeline.
+
+```bash
+python src/train.py \
+  --config /path/to/experiment.yaml \
+  --model-config cfg/model/monai_flexibleunet_efficientnet_b2.yaml \
+  --task-type image \
+  --train-csv /path/to/train.csv \
+  --test-csv /path/to/test.csv
+```
+
 ```bash
 python src/train.py \
   --config /path/to/experiment.yaml \

@@ -16,6 +16,7 @@ from networks.dinov3_seg import DINOv3ViTSeg
 from networks.svsswrapper import SVSSWrapper
 from networks.ukan import UKAN
 from networks.smp_unet import SMPUnet
+from networks.monai_flexible_unet import MonaiFlexibleUNet
 
 from utils import nested_dotdict, run_training, banner, build_optimizer, DiceCELoss
 from trainer_image import Trainer, inference_with_miou
@@ -87,7 +88,7 @@ if cfg.experiment.debug:
     cfg.val.wandb_vis = False
 
 
-if not (str(cfg.train.model).startswith("dv3_") or str(cfg.train.model) == "ukan" or str(cfg.train.model).startswith("smp_unet_")):
+if not (str(cfg.train.model).startswith("dv3_") or str(cfg.train.model) == "ukan" or str(cfg.train.model).startswith("smp_unet_") or str(cfg.train.model).startswith("monai_flexibleunet_")):
     raise ValueError(
         "Image training supports U-KAN, SMP U-Net, or DINOv3 model names."
     )
@@ -557,6 +558,19 @@ elif str(cfg.train.model).startswith("smp_unet_"):
         encoder_weights=getattr(cfg.train, "encoder_weights", "imagenet"),
         in_channels=int(cfg.data.num_ch),
         decoder_attention_type=getattr(cfg.train, "decoder_attention_type", None),
+    ).to(device)
+    if cfg.train.ft_encoder:
+        for p in model.encoder.parameters():
+            p.requires_grad = False
+
+elif str(cfg.train.model).startswith("monai_flexibleunet_"):
+    if not is_image_task:
+        raise ValueError("MONAI FlexibleUNet baselines are image-only; set data.task_type: image.")
+    model = MonaiFlexibleUNet(
+        backbone=str(cfg.train.model).removeprefix("monai_flexibleunet_").replace("_", "-"),
+        num_classes=int(cfg.data.num_class),
+        in_channels=int(cfg.data.num_ch),
+        pretrained=bool(getattr(cfg.train, "monai_pretrained", True)),
     ).to(device)
     if cfg.train.ft_encoder:
         for p in model.encoder.parameters():

@@ -1,0 +1,6 @@
+# MONAI FlexibleUNet with ImageNet-pretrained EfficientNet-B2 encoder.
+# It shares the existing image CSV, augmentation, loss, trainer, metrics, and
+# inference paths. The model applies ImageNet mean/std normalization internally.
+train:
+  model: monai_flexibleunet_efficientnet_b2  # MONAI FlexibleUNet + EfficientNet-B2.
+  monai_pretrained: true                     # ImageNet encoder initialization for training.
