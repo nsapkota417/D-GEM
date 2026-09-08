@@ -15,6 +15,7 @@ from pathlib import Path
 from networks.dinov3_seg import DINOv3ViTSeg
 from networks.svsswrapper import SVSSWrapper
 from networks.ukan import UKAN
+from networks.unext import UNext
 from networks.smp_unet import SMPUnet
 from networks.monai_flexible_unet import MonaiFlexibleUNet
 
@@ -88,9 +89,9 @@ if cfg.experiment.debug:
     cfg.val.wandb_vis = False
 
 
-if not (str(cfg.train.model).startswith("dv3_") or str(cfg.train.model) == "ukan" or str(cfg.train.model).startswith("smp_unet_") or str(cfg.train.model).startswith("monai_flexibleunet_")):
+if not (str(cfg.train.model).startswith("dv3_") or str(cfg.train.model) in {"ukan", "unext"} or str(cfg.train.model).startswith("smp_unet_") or str(cfg.train.model).startswith("monai_flexibleunet_")):
     raise ValueError(
-        "Image training supports U-KAN, SMP U-Net, or DINOv3 model names."
+        "Image training supports UNeXt, U-KAN, SMP U-Net, MONAI FlexibleUNet, or DINOv3 model names."
     )
 
 if cfg.val.eval_only:
@@ -547,6 +548,17 @@ elif str(cfg.train.model) == "ukan":
         in_channels=int(cfg.data.num_ch),
         embed_dims=tuple(getattr(cfg.train, "ukan_embed_dims", [256, 320, 512])),
         drop_rate=float(getattr(cfg.train, "ukan_drop_rate", 0.0)),
+    ).to(device)
+
+elif str(cfg.train.model) == "unext":
+    if not is_image_task:
+        raise ValueError("UNeXt is an image-only baseline; set data.task_type: image.")
+    model = UNext(
+        num_classes=int(cfg.data.num_class),
+        in_channels=int(cfg.data.num_ch),
+        embed_dims=tuple(getattr(cfg.train, "unext_embed_dims", [128, 160, 256])),
+        drop_rate=float(getattr(cfg.train, "unext_drop_rate", 0.0)),
+        drop_path_rate=float(getattr(cfg.train, "unext_drop_path_rate", 0.0)),
     ).to(device)
 
 elif str(cfg.train.model).startswith("smp_unet_"):

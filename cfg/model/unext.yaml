@@ -1,0 +1,8 @@
+# UNeXt image-only baseline: convolutional encoder plus shifted-MLP bottleneck.
+train:
+  model: unext                         # Select the self-contained UNeXt baseline.
+  pt_encoder: false                    # UNeXt does not use external pretrained weights.
+  ft_encoder: false                    # The whole model is trained from the first epoch.
+  unext_embed_dims: [128, 160, 256]    # Original UNeXt stage widths; first value must divide by 8.
+  unext_drop_rate: 0.0                 # Dropout in shifted-MLP blocks.
+  unext_drop_path_rate: 0.0            # Stochastic depth; 0 disables it for small datasets.

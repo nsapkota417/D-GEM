@@ -22,6 +22,7 @@ from PIL import Image
 from networks.dinov3_seg import DINOv3ViTSeg
 from networks.svsswrapper import SVSSWrapper
 from networks.ukan import UKAN
+from networks.unext import UNext
 from networks.smp_unet import SMPUnet
 from networks.monai_flexible_unet import MonaiFlexibleUNet
 from utils import nested_dotdict
@@ -183,6 +184,16 @@ def build_model(cfg, device: torch.device):
             in_channels=int(getattr(cfg.data, "num_ch", 3)),
             decoder_attention_type=getattr(cfg.train, "decoder_attention_type", None),
         ).to(device)
+    if model_name == "unext":
+        if str(cfg.data.task_type).lower() != "image":
+            raise ValueError("UNeXt inference supports image mode only.")
+        return UNext(
+            num_classes=int(cfg.data.num_class),
+            in_channels=int(getattr(cfg.data, "num_ch", 3)),
+            embed_dims=tuple(getattr(cfg.train, "unext_embed_dims", [128, 160, 256])),
+            drop_rate=float(getattr(cfg.train, "unext_drop_rate", 0.0)),
+            drop_path_rate=float(getattr(cfg.train, "unext_drop_path_rate", 0.0)),
+        ).to(device)
     if model_name == "ukan":
         if str(cfg.data.task_type).lower() != "image":
             raise ValueError("U-KAN inference supports image mode only.")
@@ -193,7 +204,7 @@ def build_model(cfg, device: torch.device):
             drop_rate=float(getattr(cfg.train, "ukan_drop_rate", 0.0)),
         ).to(device)
     if "dv3" not in model_name:
-        raise ValueError("Standalone inference supports U-KAN or DINOv3/D-GEM checkpoints only.")
+        raise ValueError("Standalone inference supports UNeXt, U-KAN, SMP U-Net, MONAI FlexibleUNet, or DINOv3/D-GEM checkpoints only.")
     backbone = DINOv3ViTSeg(
         model_name=f"facebook/dinov3-{model_name.split('_')[-1]}-pretrain-lvd1689m",
         num_classes=int(cfg.data.num_class), pt_encoder=bool(cfg.train.pt_encoder),
