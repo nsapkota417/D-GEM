@@ -125,9 +125,14 @@ suffix = getattr(
     "SUFFX",
     getattr(cfg.experiment, "SUFFIX", ""),
 )
+model_tag = "".join(
+    char if char.isalnum() or char in {"_", "-"} else "-"
+    for char in str(cfg.train.model)
+).strip("-")
 
 run_hp = (
     f"{suffix}"
+    f"_{model_tag}"
     # f"_{cfg.train.resize_h}p"
     f"_pt{str(cfg.train.pt_encoder)[0]}"
     f"_ft{str(cfg.train.ft_encoder)[0]}"

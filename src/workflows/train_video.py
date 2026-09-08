@@ -64,10 +64,15 @@ device_idx = int(getattr(cfg.train, "gpu", 0))
 device = torch.device(f"cuda:{device_idx}" if torch.cuda.is_available() else "cpu")
 
 ts = time.strftime("%m%d_%H%M%S")
+model_tag = "".join(
+    char if char.isalnum() or char in {"_", "-"} else "-"
+    for char in str(cfg.train.model)
+).strip("-")
 
 # ---- wandb and logging
 run_hp = (
     f'{cfg.experiment.SUFFX}'
+    f'_{model_tag}'
     f'_{cfg.train.resize_h}p'
     # f'sd.{seed}'
     f'_{cfg.data.name[0].upper()}'
