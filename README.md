@@ -34,6 +34,7 @@ Accepted at the 29th International Conference on Medical Image Computing and Com
 - [Inference and propagation](#inference-and-propagation)
 - [Repository layout](#repository-layout)
 - [Citation](#citation)
+- [Acknowledgments](#acknowledgments)
 
 ## Overview
 
@@ -247,3 +248,11 @@ src/workflows/           Internal image and video training workflows
 
 This work was supported in part by the Advanced Research Projects Agency for
 Health (ARPA-H), Award 1AY2AX000049.
+
+D-GEM uses a pretrained DINOv3 encoder and reports comparisons with DINOv2,
+SAM 2, and SAM 3. We thank the respective authors and Meta AI Research for
+making these research resources available. See
+[Third-party acknowledgements](ACKNOWLEDGEMENTS.md) for the exact dependency
+scope, upstream projects, citations, and license notices. DINOv3 and SAM 3
+materials are governed by their respective Meta licenses; SAM 2 and the main
+DINOv2 release use Apache License 2.0.
