@@ -1,14 +1,26 @@
-# D-GEM: Sparsely Supervised Surgical Video Segmentation with Reliable Asymmetric Dual Memory
+<div align="center">
 
-> D-GEM combines a DINOv3 segmentation backbone with reliability-gated
-> transient memory and evolving semantic anchors for long, sparsely annotated
-> surgical videos.
+# D-GEM
 
-**Nishchal Sapkota, Yejia Zhang, Bofang Zheng, Xianshi Ma, Haoyan Shi,
-Yohannes Mariam, and Danny Z. Chen**<br>
+### Sparsely Supervised Surgical Video Segmentation with Reliable Asymmetric Dual Memory
+
+<a href="https://papers.miccai.org/miccai-2026/0978-Paper5645.html"><img src="https://img.shields.io/badge/Official%20paper-MICCAI%20Open%20Access-005EB8" alt="Official paper on MICCAI Open Access"></a>
+<a href="https://papers.miccai.org/miccai-2026/paper/5645_paper.pdf"><img src="https://img.shields.io/badge/Paper-PDF-B31B1B?logo=adobeacrobatreader&logoColor=white" alt="D-GEM paper PDF"></a>
+<a href="docs/RUNNING.md"><img src="https://img.shields.io/badge/Documentation-Training%20%26%20inference-2F80ED?logo=readthedocs&logoColor=white" alt="Training and inference documentation"></a>
+<a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-2EA44F" alt="MIT License"></a>
+<a href="https://conferences.miccai.org/2026/"><img src="https://img.shields.io/badge/Published%20at-MICCAI%202026-7A2E9D" alt="Published at MICCAI 2026"></a>
+
+**Nishchal Sapkota, Yejia Zhang, Bofang Zheng, Xianshi Ma, Haoyan Shi, Yohannes Mariam, and Danny Z. Chen**
+
 Department of Computer Science and Engineering, University of Notre Dame
 
-Accepted at the 29th International Conference on Medical Image Computing and Computer Assisted Intervention (MICCAI 2026).
+[Open-access paper](https://papers.miccai.org/miccai-2026/0978-Paper5645.html) · [PDF](https://papers.miccai.org/miccai-2026/paper/5645_paper.pdf) · [Method](#overview) · [Run guide](docs/RUNNING.md) · [Results](#d-gem-performance) · [Citation](#citation)
+
+</div>
+
+> **MICCAI 2026** - D-GEM combines a DINOv3 segmentation backbone with
+> reliability-gated transient memory and evolving semantic anchors for long,
+> sparsely annotated surgical videos.
 
 <p align="center">
   <a href="https://conferences.miccai.org/2026/en/PROMOTIONAL-KIT.html">
@@ -16,11 +28,7 @@ Accepted at the 29th International Conference on Medical Image Computing and Com
   </a>
 </p>
 
-<sub>Official MICCAI 2026 artwork from the <a href="https://conferences.miccai.org/2026/en/PROMOTIONAL-KIT.html">MICCAI promotional kit</a>.</sub>
-
-| Method | Implementation | Practical guide |
-| --- | --- | --- |
-| Sparsely Supervised Surgical Video Segmentation with Reliable Asymmetric Dual Memory | This repository | [Training and inference guide](docs/RUNNING.md) |
+<p align="center"><sub>Official MICCAI 2026 artwork from the <a href="https://conferences.miccai.org/2026/en/PROMOTIONAL-KIT.html">MICCAI promotional kit</a>.</sub></p>
 
 ## Contents
 
