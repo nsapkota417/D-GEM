@@ -46,6 +46,12 @@ frame.
 
 D-GEM uses an asymmetric two-bank memory design:
 
+<p align="center">
+  <img src="assets/dgem-method.png" alt="D-GEM method overview showing DINOv3 encoding, evolving anchor and gated transient memories, dual-memory attention, reliability gating, and segmentation output" width="100%">
+</p>
+
+<p align="center"><em>D-GEM method overview. Support annotations initialize the evolving anchor memory, while reliability-gated predictions update transient and semantic memory during video propagation.</em></p>
+
 | Component | Role | Update behavior |
 | --- | --- | --- |
 | **DINOv3 encoder + segmentation head** | Produces per-frame patch features and semantic logits | Pretrained visual representation with lightweight adaptation |
